@@ -4,6 +4,8 @@ import BUMDesaWebsite from "./components/BUMDesaWebsite";
 function AdminSection() {
   return (
     <section
+      id="admin-section"
+      role="region"
       aria-labelledby="admin-section-title"
       className="mt-10 rounded-2xl border border-gray-200 p-6 shadow-sm"
     >
@@ -13,7 +15,7 @@ function AdminSection() {
         </h2>
         <a
           href="/admin"
-          className="rounded-xl border px-3 py-1 text-sm hover:bg-gray-50"
+          className="rounded-xl border px-3 py-1 text-sm hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
         >
           Buka Halaman Admin →
         </a>
@@ -22,7 +24,7 @@ function AdminSection() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <a
           href="/admin/users"
-          className="rounded-2xl border p-4 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="rounded-2xl border p-4 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
           aria-label="Kelola pengguna"
         >
           <h3 className="mb-1 text-base font-medium">Kelola Pengguna</h3>
@@ -31,7 +33,7 @@ function AdminSection() {
 
         <a
           href="/admin/posts"
-          className="rounded-2xl border p-4 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="rounded-2xl border p-4 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
           aria-label="Kelola konten"
         >
           <h3 className="mb-1 text-base font-medium">Kelola Konten</h3>
@@ -40,7 +42,7 @@ function AdminSection() {
 
         <a
           href="/admin/reports"
-          className="rounded-2xl border p-4 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="rounded-2xl border p-4 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
           aria-label="Lihat laporan"
         >
           <h3 className="mb-1 text-base font-medium">Laporan</h3>
@@ -49,7 +51,7 @@ function AdminSection() {
 
         <a
           href="/admin/settings"
-          className="rounded-2xl border p-4 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="rounded-2xl border p-4 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
           aria-label="Pengaturan situs"
         >
           <h3 className="mb-1 text-base font-medium">Pengaturan</h3>
@@ -61,13 +63,20 @@ function AdminSection() {
 }
 
 export default function App() {
+  // sementara: ganti dengan sumber role dari auth kamu
   const currentUser = { id: "1", name: "Ilham", role: "admin" };
+  const isAdmin = currentUser?.role === "admin";
 
   return (
-    <div className="App mx-auto max-w-6xl px-4 py-8">
+    <main role="main" className="App mx-auto max-w-6xl px-4 py-8">
       <BUMDesaWebsite />
 
-      {currentUser?.role === "admin" ? <AdminSection /> : null}
-    </div>
+      {isAdmin && (
+        <>
+          <hr className="my-8 border-gray-200" />
+          <AdminSection />
+        </>
+      )}
+    </main>
   );
 }
