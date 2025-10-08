@@ -63,7 +63,6 @@ function AdminSection() {
 }
 
 export default function App() {
-  // sementara: ganti dengan sumber role dari auth kamu
   const currentUser = { id: "1", name: "Ilham", role: "admin" };
   const isAdmin = currentUser?.role === "admin";
 
