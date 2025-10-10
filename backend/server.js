@@ -101,6 +101,66 @@ app.get('/api/products/:id', async (req, res) => {
   }
 });
 
+/* ====== Tambahan: UPDATE & DELETE ====== */
+
+// UPDATE (PUT /api/products/:id)
+app.put('/api/products/:id', async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const { name, price, description, stock } = req.body;
+
+    // ambil data lama
+    const [existing] = await pool.execute('SELECT * FROM products WHERE id = ?', [id]);
+    if (!existing.length) return res.status(404).json({ error: 'Produk tidak ditemukan' });
+
+    const prev = existing[0];
+    const next = {
+      name: (name ?? prev.name).toString().trim(),
+      price: price != null ? Number(price) : prev.price,
+      description: description ?? prev.description,
+      stock: stock != null ? Number(stock) : prev.stock,
+    };
+
+    if (!next.name || next.price == null) {
+      return res.status(400).json({ error: 'name dan price wajib diisi' });
+    }
+
+    const [result] = await pool.execute(
+      `UPDATE products
+       SET name=?, price=?, description=?, stock=?
+       WHERE id=?`,
+      [next.name, next.price, next.description, next.stock, id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Produk tidak ditemukan' });
+    }
+
+    const [rows] = await pool.execute('SELECT * FROM products WHERE id=?', [id]);
+    return res.json({ data: rows[0] });
+  } catch (err) {
+    console.error('[mysql:update]', err);
+    return res.status(500).json({ error: 'Gagal mengubah produk' });
+  }
+});
+
+// DELETE (DELETE /api/products/:id)
+app.delete('/api/products/:id', async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const [result] = await pool.execute('DELETE FROM products WHERE id = ?', [id]);
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Produk tidak ditemukan' });
+    }
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error('[mysql:delete]', err);
+    return res.status(500).json({ error: 'Gagal menghapus produk' });
+  }
+});
+
+/* ======================================= */
+
 // 404 & Error handlers
 app.use((req, res) => {
   res.status(404).json({ error: `Route ${req.method} ${req.originalUrl} tidak ditemukan` });
@@ -111,7 +171,7 @@ app.use((err, _req, res, _next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
-// Start server 
+// Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`[server] listening on http://localhost:${PORT}`);
