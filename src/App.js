@@ -1,7 +1,18 @@
+<<<<<<< Updated upstream
 import React, { useState } from "react";
 import HomePage from "./HomePage";
 import AboutUsPage from "./AboutUsPage";
 import ProductsPage from "./ProductsPage";
+=======
+import React from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Homepage from "./components/Homepage";
+import AboutUs from "./components/AboutUs";
+import Products from "./components/Products";
+import Services from "./components/Services";
+import News from "./components/News";
+import Contact from "./components/Contact";
+>>>>>>> Stashed changes
 
 function AdminSection() {
   return (
@@ -19,7 +30,6 @@ function AdminSection() {
           Buka Halaman Admin →
         </button>
       </div>
-
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <button
           className="rounded-2xl border p-4 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 text-left"
@@ -29,28 +39,49 @@ function AdminSection() {
           <p className="text-sm text-gray-600">
             Tambah, edit, nonaktifkan user.
           </p>
+<<<<<<< Updated upstream
         </button>
 
         <button
           className="rounded-2xl border p-4 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 text-left"
+=======
+        </a>
+        <a
+          href="/admin/posts"
+          className="rounded-2xl border p-4 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+>>>>>>> Stashed changes
           aria-label="Kelola konten"
         >
           <h3 className="mb-1 text-base font-medium">Kelola Konten</h3>
           <p className="text-sm text-gray-600">
             Artikel, banner, & landing copy.
           </p>
+<<<<<<< Updated upstream
         </button>
 
         <button
           className="rounded-2xl border p-4 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 text-left"
+=======
+        </a>
+        <a
+          href="/admin/reports"
+          className="rounded-2xl border p-4 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+>>>>>>> Stashed changes
           aria-label="Lihat laporan"
         >
           <h3 className="mb-1 text-base font-medium">Laporan</h3>
           <p className="text-sm text-gray-600">Traffic, signup, konversi.</p>
+<<<<<<< Updated upstream
         </button>
 
         <button
           className="rounded-2xl border p-4 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 text-left"
+=======
+        </a>
+        <a
+          href="/admin/settings"
+          className="rounded-2xl border p-4 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+>>>>>>> Stashed changes
           aria-label="Pengaturan situs"
         >
           <h3 className="mb-1 text-base font-medium">Pengaturan</h3>
@@ -66,6 +97,7 @@ export default function App() {
   const currentUser = { id: "1", name: "Ilham", role: "admin" };
   const isAdmin = currentUser?.role === "admin";
 
+<<<<<<< Updated upstream
   const handleNavigate = (page) => {
     const pageMap = {
       Home: "home",
@@ -104,5 +136,38 @@ export default function App() {
         </div>
       )}
     </main>
+=======
+  return (
+    <Router>
+      <div className="App">
+        <Routes>
+          <Route
+            path="/"
+            element={<Homepage isAdmin={isAdmin} AdminSection={AdminSection} />}
+          />
+          <Route
+            path="/about-us"
+            element={<AboutUs isAdmin={isAdmin} AdminSection={AdminSection} />}
+          />
+          <Route
+            path="/products"
+            element={<Products isAdmin={isAdmin} AdminSection={AdminSection} />}
+          />
+          <Route
+            path="/services"
+            element={<Services isAdmin={isAdmin} AdminSection={AdminSection} />}
+          />
+          <Route
+            path="/news"
+            element={<News isAdmin={isAdmin} AdminSection={AdminSection} />}
+          />
+          <Route
+            path="/contact"
+            element={<Contact isAdmin={isAdmin} AdminSection={AdminSection} />}
+          />
+        </Routes>
+      </div>
+    </Router>
+>>>>>>> Stashed changes
   );
 }
