@@ -25,11 +25,11 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
 });
 
-/* =======================
-   PRODUCTS (MySQL)
-   ======================= */
+// =======================
+// PRODUCTS (MySQL)
+// =======================
 
-// CREATE (simpan ke MySQL)
+// CREATE ( di simpan ke MySQL)
 app.post('/api/products', async (req, res) => {
   try {
     const { name, price, description, stock } = req.body;
@@ -101,8 +101,6 @@ app.get('/api/products/:id', async (req, res) => {
   }
 });
 
-/* ====== Tambahan: UPDATE & DELETE ====== */
-
 // UPDATE (PUT /api/products/:id)
 app.put('/api/products/:id', async (req, res) => {
   try {
@@ -159,7 +157,26 @@ app.delete('/api/products/:id', async (req, res) => {
   }
 });
 
-/* ======================================= */
+
+// LOKASI / MAPS (Footer)
+
+app.get('/api/location/business', (_req, res) => {
+  const name    = process.env.BUSINESS_NAME || 'Lokasi';
+  const address = process.env.BUSINESS_ADDRESS || '';
+  const lat     = Number(process.env.BUSINESS_LAT);
+  const lng     = Number(process.env.BUSINESS_LNG);
+
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    return res.status(500).json({ error: 'Koordinat bisnis belum di-set di .env' });
+  }
+
+  // Link peta & rute Google Maps
+  const mapsUrl       = `https://www.google.com/maps?q=${lat},${lng}`;
+  const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+  const embedUrl      = `https://www.google.com/maps?q=${lat},${lng}&hl=id&z=16&output=embed`;
+
+  res.json({ name, address, lat, lng, mapsUrl, directionsUrl, embedUrl });
+});
 
 // 404 & Error handlers
 app.use((req, res) => {
