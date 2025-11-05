@@ -25,6 +25,11 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
 });
 
+/* ======== [ADD] NEWS ROUTES (2 baris) ======== */
+const newsRoutes = require('./routes/news.routes');
+app.use('/api/news', newsRoutes);
+/* ============================================ */
+
 // =======================
 // PRODUCTS (MySQL)
 // =======================

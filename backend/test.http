@@ -1,0 +1,29 @@
+### CREATE (tambah produk)
+POST http://localhost:5000/api/products
+Content-Type: application/json
+
+{
+  "name": "Anyaman Peci",
+  "price": 17000,
+  "description": "Terbuat dari daun pohon kelapa",
+  "stock": 20
+}
+
+### READ (lihat semua produk)
+GET http://localhost:5000/api/products
+
+### READ by ID (misalnya ID 1)
+GET http://localhost:5000/api/products/1
+
+### UPDATE (ubah produk dengan ID 1)
+PUT http://localhost:5000/api/products/9
+Content-Type: application/json
+
+{
+  "name": "Anyaman Peci",
+  "price": 20000,
+  "stock": 15
+}
+
+### DELETE (hapus produk dengan ID 1)
+DELETE http://localhost:5000/api/products/9
