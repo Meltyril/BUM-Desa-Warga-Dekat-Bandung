@@ -47,24 +47,28 @@ export default function Services({ isAdmin, AdminSection }) {
       <Navbar />
 
       {/* Hero Section */}
-      <section className="relative h-96 bg-gray-300 flex items-center justify-center mt-16">
-        <div className="absolute top-1/4 w-32 h-32 bg-gray-400 rounded-full"></div>
+      <section className="relative h-96 bg-[#b8c5ba] flex items-center justify-center mt-16">
+        <div className="absolute top-1/4 w-32 h-32 bg-[#a8b5aa] rounded-full opacity-60"></div>
         <div className="text-center z-10 px-4">
-          <h1 className="text-4xl md:text-5xl text-white mb-4">Layanan Kami</h1>
-          <p className="text-white max-w-2xl mx-auto text-sm leading-relaxed">
+          <h1 className="text-4xl md:text-5xl text-[#3d4f45] mb-4 font-light">
+            Layanan Kami
+          </h1>
+          <p className="text-[#4a5a50] max-w-2xl mx-auto text-sm leading-relaxed">
             Sekarang! closing di BUM Desa Warga Dekat Bandung. Kami dapat
             memperbaharuan dari Lokal. Kami juga dapat menolong untuk berbagai
             layanan lainnya. Desa warga dapat mengakses informasi kepada
             sebaiknya untuk untuk Anda.
           </p>
         </div>
-        <div className="absolute bottom-0 w-full h-1/2 bg-gradient-to-t from-gray-400 to-transparent"></div>
+        <div className="absolute bottom-0 w-full h-1/2 bg-gradient-to-t from-[#a8b5aa] to-transparent"></div>
       </section>
 
       {/* Main Content */}
-      <section className="py-20 px-6">
+      <section className="py-20 px-6 bg-white">
         <div className="max-w-4xl mx-auto text-center mb-16">
-          <h2 className="text-3xl mb-6">Melayani Dengan Sepenuh Hati</h2>
+          <h2 className="text-3xl mb-6 text-[#3d4f45] font-light">
+            Melayani Dengan Sepenuh Hati
+          </h2>
           <p className="text-gray-600 text-sm leading-relaxed">
             AMDEC (Tax agenda) et nihilum tellus socus. Pharetra mauris riserra
             ritum at tincidunt aenean neque gravida. Et non quam lorem et et
@@ -75,9 +79,9 @@ export default function Services({ isAdmin, AdminSection }) {
         <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12">
           {services.map((service) => (
             <div key={service.id} className="flex gap-6">
-              <div className="w-24 h-24 bg-gray-300 rounded-full flex-shrink-0"></div>
+              <div className="w-24 h-24 bg-[#b8c5ba] rounded-full flex-shrink-0"></div>
               <div>
-                <h3 className="text-xl mb-3">{service.title}</h3>
+                <h3 className="text-xl mb-3 text-[#3d4f45]">{service.title}</h3>
                 <p className="text-gray-600 text-sm leading-relaxed">
                   {service.description}
                 </p>
@@ -88,16 +92,18 @@ export default function Services({ isAdmin, AdminSection }) {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 px-6 bg-gray-50">
+      <section className="py-20 px-6 bg-[#f5f7f6]">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl mb-6">Tertarik Menggunakan Layanan Kami?</h2>
+          <h2 className="text-3xl mb-6 text-[#3d4f45] font-light">
+            Tertarik Menggunakan Layanan Kami?
+          </h2>
           <p className="text-gray-600 mb-8 text-sm leading-relaxed">
             Amet, urna egestas et ultrices tellus socus. Pharetra mauris viverra
             rutrum at tincidunt aenean neque gravida. Cursus sit at risus
             pellentesque sed interdum sit non. In vel sit blanque non tempor, ut
             praesent.
           </p>
-          <button className="bg-gray-900 text-white px-8 py-3 rounded-full text-sm hover:bg-gray-800 transition">
+          <button className="bg-[#3d4f45] text-white px-8 py-3 rounded-full text-sm hover:bg-[#4a5a50] transition">
             HUBUNGI KAMI
           </button>
         </div>

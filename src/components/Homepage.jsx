@@ -7,29 +7,32 @@ export default function Homepage({ isAdmin, AdminSection }) {
   const [currentStaffIndex, setCurrentStaffIndex] = useState(0);
 
   const staffMembers = [
-    { id: 1, name: "Staff Member 1" },
-    { id: 2, name: "Staff Member 2" },
-    { id: 3, name: "Staff Member 3" },
-    { id: 4, name: "Staff Member 4" },
-    { id: 5, name: "Staff Member 5" },
+    { id: 1, name: "Staff 1", position: "Jabatan" },
+    { id: 2, name: "Staff 2", position: "Jabatan" },
+    { id: 3, name: "Staff 3", position: "Jabatan" },
+    { id: 4, name: "Staff 4", position: "Jabatan" },
+    { id: 5, name: "Staff 5", position: "Jabatan" },
   ];
 
   const newsItems = [
     {
       id: 1,
       title: "Berita 1",
+      date: "01 Desember 2025",
       description:
         "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
     },
     {
       id: 2,
       title: "Berita 2",
+      date: "02 Desember 2025",
       description:
         "Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
     },
     {
       id: 3,
       title: "Berita 3",
+      date: "03 Desember 2025",
       description:
         "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.",
     },
@@ -57,71 +60,181 @@ export default function Homepage({ isAdmin, AdminSection }) {
       <Navbar />
 
       {/* Hero Section */}
-      <section className="relative h-screen bg-gray-300 flex items-center justify-center mt-16">
-        <div className="absolute top-1/4 w-32 h-32 bg-gray-400 rounded-full"></div>
+      <section className="relative h-screen bg-[#b8c5ba] flex items-center justify-center mt-16">
+        <div className="absolute top-1/4 w-32 h-32 bg-[#a8b5aa] rounded-full opacity-60"></div>
         <div className="text-center z-10 px-4">
-          <h1 className="text-4xl md:text-5xl text-gray-700 mb-4">
+          <h1 className="text-4xl md:text-5xl text-[#3d4f45] mb-4 font-light">
             Lorem Ipsum Dolor Sit Amet
           </h1>
-          <p className="text-gray-600 max-w-2xl mx-auto text-sm leading-relaxed">
+          <p className="text-[#4a5a50] max-w-2xl mx-auto text-sm leading-relaxed">
             Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
             eiusmod tempor incididunt ut labore et dolore magna aliqua.
           </p>
         </div>
-        <div className="absolute bottom-0 w-full h-1/2 bg-gradient-to-t from-gray-400 to-transparent"></div>
+        <div className="absolute bottom-0 w-full h-1/2 bg-gradient-to-t from-[#a8b5aa] to-transparent"></div>
       </section>
 
       {/* Welcome Section */}
-      <section className="py-20 px-6">
+      <section className="py-20 px-6 bg-white">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl mb-2">Selamat Datang</h2>
-          <h3 className="text-2xl mb-6">Di</h3>
-          <h2 className="text-3xl mb-8">BUM Desa Warga Dekat Bandung</h2>
+          <h2 className="text-3xl mb-2 text-[#3d4f45] font-light">
+            Selamat Datang
+          </h2>
+          <h3 className="text-2xl mb-6 text-[#3d4f45] font-light">Di</h3>
+          <h2 className="text-3xl mb-8 text-[#3d4f45] font-light">
+            BUM Desa Warga Dekat Bandung
+          </h2>
           <p className="text-gray-600 leading-relaxed mb-8 text-sm">
-            BUM Desa (Badan Usaha Milik Desa) adalah lembaga usaha desa yang
-            dikelola oleh masyarakat dan pemerintah desa dalam upaya memperkuat
-            perekonomian desa dan dibentuk berdasarkan kebutuhan dan potensi
-            desa.
+            Amet, urna egestas et ultrices tellus socis. Pharetra mauris viverra
+            rutrum at tincidunt aenean neque gravida. Cursus sit at risus
+            pellentesque sed interdum sit non. In vel sit blanque non tempor, ut
+            praesent. Nisi at orci turpis sapien sit. Donec arcu porttitor lorem
+            et nibh commodo lacus et. Convallis aliquet elit, quam laoreet
+            habitant lacus, ut bibendum at.
           </p>
-          <button className="bg-gray-900 text-white px-8 py-3 rounded-full text-sm hover:bg-gray-800 transition">
-            Selengkapnya
+          <button className="bg-[#3d4f45] text-white px-8 py-3 rounded-full text-sm hover:bg-[#4a5a50] transition">
+            ABOUT US
           </button>
         </div>
       </section>
 
-      {/* History Section */}
-      <section className="py-20 px-6 bg-gray-50">
-        <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
-          <div className="bg-gray-300 h-96 relative">
-            <div className="absolute top-1/3 left-1/2 transform -translate-x-1/2 w-24 h-24 bg-gray-400 rounded-full"></div>
-            <div className="absolute bottom-0 w-full h-1/2 bg-gradient-to-t from-gray-400 to-transparent"></div>
+      {/* Why Choose Us Section */}
+      <section className="py-20 px-6 bg-[#f5f7f6]">
+        <div className="max-w-4xl mx-auto text-center mb-12">
+          <h2 className="text-3xl mb-6 text-[#3d4f45] font-light">
+            Mengapa Memilih Kami?
+          </h2>
+        </div>
+        <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8">
+          <div className="bg-white p-8 text-center shadow-sm rounded-lg">
+            <div className="text-5xl font-bold text-[#3d4f45] mb-4">8+</div>
+            <p className="text-gray-600 text-sm">Tahun Pengalaman</p>
           </div>
-          <div>
-            <h2 className="text-3xl mb-6">Sejarah Kami</h2>
-            <p className="text-gray-600 leading-relaxed mb-4 text-sm">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
-              eiusmod tempor incididunt ut labore et dolore magna aliqua.
-            </p>
-            <p className="text-gray-600 leading-relaxed text-sm">
-              Excepteur sint occaecat cupidatat non proident, sunt in culpa qui
-              officia deserunt mollit anim id est laborum.
-            </p>
+          <div className="bg-white p-8 text-center shadow-sm rounded-lg">
+            <div className="text-5xl font-bold text-[#3d4f45] mb-4">100%</div>
+            <p className="text-gray-600 text-sm">Produk Lokal</p>
+          </div>
+          <div className="bg-white p-8 text-center shadow-sm rounded-lg">
+            <div className="text-5xl font-bold text-[#3d4f45] mb-4">500+</div>
+            <p className="text-gray-600 text-sm">Pelanggan Puas</p>
+          </div>
+        </div>
+      </section>
+
+      {/* History Section */}
+      <section className="py-20 px-6 bg-white">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-3xl text-center mb-12 text-[#3d4f45] font-light">
+            Sejarah Kami
+          </h2>
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div className="bg-[#b8c5ba] h-96 relative rounded-lg">
+              <div className="absolute top-1/3 left-1/2 transform -translate-x-1/2 w-24 h-24 bg-[#a8b5aa] rounded-full"></div>
+              <div className="absolute bottom-0 w-full h-1/2 bg-gradient-to-t from-[#a8b5aa] to-transparent rounded-b-lg"></div>
+            </div>
+            <div>
+              <div className="mb-6">
+                <div className="flex items-center mb-4">
+                  <div className="w-16 h-16 bg-[#3d4f45] text-white rounded flex items-center justify-center mr-4 text-xl font-bold">
+                    20XX
+                  </div>
+                  <h3 className="text-xl font-semibold text-[#3d4f45]">
+                    Berdirinya BUMDes
+                  </h3>
+                </div>
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  BUM Desa Warga Dekat Bandung didirikan dengan tujuan untuk
+                  memberdayakan ekonomi desa dan meningkatkan kesejahteraan
+                  masyarakat.
+                </p>
+              </div>
+              <div className="mb-6">
+                <div className="flex items-center mb-4">
+                  <div className="w-16 h-16 bg-[#3d4f45] text-white rounded flex items-center justify-center mr-4 text-xl font-bold">
+                    20XX
+                  </div>
+                  <h3 className="text-xl font-semibold text-[#3d4f45]">
+                    Ekspansi Produk
+                  </h3>
+                </div>
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  Mengembangkan berbagai produk lokal unggulan yang berkualitas
+                  tinggi dan diminati pasar.
+                </p>
+              </div>
+              <div>
+                <div className="flex items-center mb-4">
+                  <div className="w-16 h-16 bg-[#3d4f45] text-white rounded flex items-center justify-center mr-4 text-xl font-bold">
+                    20XX
+                  </div>
+                  <h3 className="text-xl font-semibold text-[#3d4f45]">
+                    Penghargaan Nasional
+                  </h3>
+                </div>
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  Mendapatkan pengakuan sebagai BUM Desa terbaik tingkat
+                  nasional atas dedikasi dalam pemberdayaan masyarakat.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Products Section */}
+      <section className="py-20 px-6 bg-[#f5f7f6]">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-3xl text-center mb-12 text-[#3d4f45] font-light">
+            Produk Unggulan Kami
+          </h2>
+          <div className="grid md:grid-cols-2 gap-8">
+            {[1, 2].map((item) => (
+              <div
+                key={item}
+                className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition"
+              >
+                <div className="bg-[#b8c5ba] h-64 relative">
+                  <div className="absolute top-12 left-12 w-16 h-16 bg-[#a8b5aa] rounded-full"></div>
+                  <div className="absolute bottom-0 w-full h-1/2 bg-gradient-to-t from-[#a8b5aa] to-transparent"></div>
+                </div>
+                <div className="p-6">
+                  <div className="text-xs text-[#3d4f45] mb-2 tracking-wider">
+                    PERTANIAN
+                  </div>
+                  <h3 className="text-2xl mb-4 text-[#3d4f45]">Kopi Puhu</h3>
+                  <p className="text-gray-600 text-sm leading-relaxed mb-6">
+                    Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
+                    do eiusmod tempor incididunt ut labore et dolore magna
+                    aliqua. Ut enim ad minim veniam, quis nostrud exercitation
+                    ullamco laboris nisi ut aliquip ex ea commodo consequat.
+                  </p>
+                  <button className="bg-[#3d4f45] text-white px-8 py-3 rounded-full text-sm hover:bg-[#4a5a50] transition">
+                    DETAIL PRODUK
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* Staff Section */}
-      <section className="py-20 px-6">
+      <section className="py-20 px-6 bg-white">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl text-center mb-12">Staff Desa</h2>
+          <h2 className="text-3xl text-center mb-12 text-[#3d4f45] font-light">
+            Pengurus BUM Desa
+          </h2>
           <div className="relative">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {visibleStaff.map((staff) => (
                 <div key={staff.id} className="text-center">
-                  <div className="bg-gray-300 h-64 mb-4 relative">
-                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-24 h-32 bg-gray-400 rounded-full"></div>
+                  <div className="bg-gray-200 w-32 h-32 rounded-full mx-auto mb-4 overflow-hidden">
+                    <div className="w-full h-full bg-gray-300"></div>
                   </div>
-                  <h3 className="text-lg">{staff.name}</h3>
+                  <h3 className="text-lg font-semibold text-[#3d4f45]">
+                    {staff.name}
+                  </h3>
+                  <p className="text-sm text-gray-600">{staff.position}</p>
                 </div>
               ))}
             </div>
@@ -130,18 +243,18 @@ export default function Homepage({ isAdmin, AdminSection }) {
               onClick={prevStaff}
               className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-12 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100"
             >
-              <ChevronLeft size={24} />
+              <ChevronLeft size={24} className="text-[#3d4f45]" />
             </button>
             <button
               onClick={nextStaff}
               className="absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-12 bg-white rounded-full p-2 shadow-lg hover:bg-gray-100"
             >
-              <ChevronRight size={24} />
+              <ChevronRight size={24} className="text-[#3d4f45]" />
             </button>
           </div>
 
           <div className="text-center mt-12">
-            <button className="text-sm underline hover:text-gray-600">
+            <button className="text-sm text-[#3d4f45] hover:underline">
               Lihat Semua
             </button>
           </div>
@@ -149,24 +262,30 @@ export default function Homepage({ isAdmin, AdminSection }) {
       </section>
 
       {/* News Section */}
-      <section className="py-20 px-6 bg-gray-50">
+      <section className="py-20 px-6 bg-[#f5f7f6]">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl text-center mb-12">Berita Terkini</h2>
+          <h2 className="text-3xl text-center mb-12 text-[#3d4f45] font-light">
+            Berita Terkini
+          </h2>
           <div className="grid md:grid-cols-3 gap-8">
             {newsItems.map((news) => (
               <div
                 key={news.id}
-                className="bg-white rounded-lg overflow-hidden shadow-lg"
+                className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition"
               >
-                <div className="bg-gray-300 h-48 relative">
-                  <div className="absolute top-8 left-8 w-12 h-12 bg-gray-400 rounded-full"></div>
-                  <div className="absolute bottom-0 w-full h-1/2 bg-gradient-to-t from-gray-400 to-transparent"></div>
+                <div className="bg-[#b8c5ba] h-48 relative">
+                  <div className="absolute top-8 left-8 w-12 h-12 bg-[#a8b5aa] rounded-full"></div>
+                  <div className="absolute bottom-0 w-full h-1/2 bg-gradient-to-t from-[#a8b5aa] to-transparent"></div>
                 </div>
                 <div className="p-6">
-                  <h3 className="text-xl mb-3">{news.title}</h3>
-                  <p className="text-gray-600 text-sm leading-relaxed">
+                  <p className="text-xs text-gray-500 mb-2">{news.date}</p>
+                  <h3 className="text-xl mb-3 text-[#3d4f45]">{news.title}</h3>
+                  <p className="text-gray-600 text-sm leading-relaxed mb-4">
                     {news.description}
                   </p>
+                  <button className="text-sm text-[#3d4f45] hover:underline">
+                    Baca Selengkapnya →
+                  </button>
                 </div>
               </div>
             ))}
@@ -174,51 +293,20 @@ export default function Homepage({ isAdmin, AdminSection }) {
         </div>
       </section>
 
-      {/* Booking Section */}
-      <section className="py-20 px-6">
-        <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center">
-          <div>
-            <h2 className="text-3xl mb-6">Online Booking</h2>
-            <p className="text-gray-600 mb-8 text-sm leading-relaxed">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
-              eiusmod tempor incididunt ut labore et dolore magna aliqua.
-            </p>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm mb-2">Email</label>
-                <input
-                  type="email"
-                  className="w-full border border-gray-300 px-4 py-2 rounded text-sm"
-                  placeholder="Email Anda"
-                />
-              </div>
-              <div>
-                <label className="block text-sm mb-2">Nomor Pendaftaran</label>
-                <div className="flex">
-                  <input
-                    type="text"
-                    className="flex-1 border border-gray-300 px-4 py-2 rounded-l text-sm"
-                    placeholder="123-456-7777"
-                  />
-                  <button
-                    type="button"
-                    className="bg-gray-200 px-4 rounded-r hover:bg-gray-300"
-                  >
-                    📋
-                  </button>
-                </div>
-              </div>
-              <button className="bg-gray-900 text-white px-8 py-3 rounded-full text-sm hover:bg-gray-800 transition">
-                Kirim
-              </button>
-            </div>
-          </div>
-
-          <div className="bg-gray-300 h-96 relative">
-            <div className="absolute top-1/3 left-1/2 transform -translate-x-1/2 w-24 h-24 bg-gray-400 rounded-full"></div>
-            <div className="absolute bottom-0 w-full h-1/2 bg-gradient-to-t from-gray-400 to-transparent"></div>
-          </div>
+      {/* CTA Section */}
+      <section className="py-20 px-6 bg-[#b8c5ba]">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-3xl mb-6 text-[#3d4f45] font-light">
+            Tertarik Bergabung dengan Kami?
+          </h2>
+          <p className="text-[#4a5a50] mb-8 text-sm leading-relaxed max-w-2xl mx-auto">
+            Vipat bergabung dengan Kami kita dapat tumbuh bersama dan saling
+            tumbuh kembangkan dari local. Hubungi kontak tim Anda dan pilih
+            dengan tepat serta dapatkan info lengkapnya.
+          </p>
+          <button className="bg-[#3d4f45] text-white px-8 py-3 rounded-full text-sm hover:bg-[#4a5a50] transition">
+            HUBUNGI KAMI
+          </button>
         </div>
       </section>
 
