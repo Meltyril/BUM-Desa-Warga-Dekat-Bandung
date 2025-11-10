@@ -17,17 +17,43 @@ try {
   });
 }
 
-const listPublished = async ({ page = 1, pageSize = 10 } = {}) => {
+// === listPublished with search ?q= ===
+const listPublished = async ({ page = 1, pageSize = 10, q = '' } = {}) => {
   const offset = (page - 1) * pageSize;
+
+  const where = ["status = 'published'"];
+  const params = [];
+  if (q) {
+    where.push('(title LIKE ? OR summary LIKE ? OR body LIKE ?)');
+    params.push(`%${q}%`, `%${q}%`, `%${q}%`);
+  }
+  const whereSql = `WHERE ${where.join(' AND ')}`;
+
   const [rows] = await pool.query(
     `SELECT id, title, slug, summary, cover_url, published_at
      FROM news
-     WHERE status = 'published'
+     ${whereSql}
      ORDER BY published_at DESC
      LIMIT ? OFFSET ?`,
-    [pageSize, offset]
+    [...params, pageSize, offset]
   );
   return rows;
+};
+
+// === NEW: hitung total published (untuk pagination meta) ===
+const countPublished = async ({ q = '' } = {}) => {
+  const where = ["status = 'published'"];
+  const params = [];
+  if (q) {
+    where.push('(title LIKE ? OR summary LIKE ? OR body LIKE ?)');
+    params.push(`%${q}%`, `%${q}%`, `%${q}%`);
+  }
+  const whereSql = `WHERE ${where.join(' AND ')}`;
+  const [[{ total }]] = await pool.query(
+    `SELECT COUNT(*) AS total FROM news ${whereSql}`,
+    params
+  );
+  return total;
 };
 
 const getBySlug = async (slug) => {
@@ -86,7 +112,8 @@ const updateNews = async (id, { title, slug, summary, body, cover_url, status, p
 
 module.exports = {
   listPublished,
+  countPublished, // ⬅️ ditambahkan
   getBySlug,
   createNews,
-  updateNews, // ⬅️ ditambah
+  updateNews,  
 };
