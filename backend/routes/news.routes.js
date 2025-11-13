@@ -172,4 +172,20 @@ router.put('/:id', async (req, res) => {
   }
 });
 
+// DELETE /api/news/:id -> hapus berita (ADD)
+router.delete('/:id', async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: 'invalid id' });
+
+    const ok = await News.deleteNews(id);
+    if (!ok) return res.status(404).json({ error: 'news not found' });
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[news:delete]', err);
+    res.status(500).json({ error: 'failed to delete news' });
+  }
+});
+
 module.exports = router;

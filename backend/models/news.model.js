@@ -110,10 +110,17 @@ const updateNews = async (id, { title, slug, summary, body, cover_url, status, p
   }
 };
 
+// === NEW: hapus news by id ===
+const deleteNews = async (id) => {
+  const [res] = await pool.query('DELETE FROM news WHERE id = ?', [id]);
+  return res.affectedRows > 0;
+};
+
 module.exports = {
   listPublished,
-  countPublished, // ⬅️ ditambahkan
+  countPublished, // ⬅️ tetap ada
   getBySlug,
   createNews,
-  updateNews,  
+  updateNews,
+  deleteNews,     // ⬅️ ditambahkan
 };
