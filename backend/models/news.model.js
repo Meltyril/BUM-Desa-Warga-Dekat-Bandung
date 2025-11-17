@@ -17,8 +17,8 @@ try {
   });
 }
 
-// === listPublished with search ?q= ===
-const listPublished = async ({ page = 1, pageSize = 10, q = '' } = {}) => {
+// === listPublished with search ?q= + sort ===
+const listPublished = async ({ page = 1, pageSize = 10, q = '', sort = 'latest' } = {}) => {
   const offset = (page - 1) * pageSize;
 
   const where = ["status = 'published'"];
@@ -29,11 +29,14 @@ const listPublished = async ({ page = 1, pageSize = 10, q = '' } = {}) => {
   }
   const whereSql = `WHERE ${where.join(' AND ')}`;
 
+  // latest = DESC, oldest = ASC
+  const order = (sort === 'oldest') ? 'ASC' : 'DESC';
+
   const [rows] = await pool.query(
     `SELECT id, title, slug, summary, cover_url, published_at
      FROM news
      ${whereSql}
-     ORDER BY published_at DESC
+     ORDER BY published_at ${order}
      LIMIT ? OFFSET ?`,
     [...params, pageSize, offset]
   );
@@ -118,9 +121,9 @@ const deleteNews = async (id) => {
 
 module.exports = {
   listPublished,
-  countPublished, // ⬅️ tetap ada
+  countPublished,
   getBySlug,
   createNews,
   updateNews,
-  deleteNews,     // ⬅️ ditambahkan
+  deleteNews,
 };

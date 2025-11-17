@@ -9,13 +9,13 @@ function slugify(text = '') {
     .toString()
     .trim()
     .toLowerCase()
-    .replace(/[^\w\s-]/g, '')      
-    .replace(/\s+/g, '-')         
-    .replace(/-+/g, '-')           
+    .replace(/[^\w\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
     .slice(0, 200);
 }
 
-/* ===== helper validasi sederhana (ADD) ===== */
+/* ===== helper validasi sederhana ===== */
 function validateNewsPayload(payload, { isUpdate = false } = {}) {
   const errors = [];
   const out = {};
@@ -76,17 +76,18 @@ function validateNewsPayload(payload, { isUpdate = false } = {}) {
 
   return { ok: errors.length === 0, errors, data: out };
 }
-/* =========================================== */
 
-// GET /api/news  -> list published (+ search ?q=) + META
+/* ===== LIST: +search +meta +sort ===== */
 router.get('/', async (req, res) => {
   try {
     const page = parseInt(req.query.page || '1', 10);
     const pageSize = parseInt(req.query.pageSize || '10', 10);
     const q = (req.query.q || '').toString().trim();
+    const sortRaw = (req.query.sort || 'latest').toString().toLowerCase();
+    const sort = ['latest', 'oldest'].includes(sortRaw) ? sortRaw : 'latest';
 
     const [data, total] = await Promise.all([
-      News.listPublished({ page, pageSize, q }),
+      News.listPublished({ page, pageSize, q, sort }),
       News.countPublished({ q }),
     ]);
 
@@ -97,6 +98,7 @@ router.get('/', async (req, res) => {
         limit: pageSize,
         pages: Math.max(1, Math.ceil(total / pageSize)),
         q,
+        sort,
       },
       data,
     });
@@ -106,7 +108,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/news/:slug -> detail berita
+// DETAIL
 router.get('/:slug', async (req, res) => {
   try {
     const row = await News.getBySlug(req.params.slug);
@@ -118,7 +120,7 @@ router.get('/:slug', async (req, res) => {
   }
 });
 
-// POST /api/news -> buat draft / publish sederhana
+// CREATE
 router.post('/', async (req, res) => {
   try {
     const v = validateNewsPayload(req.body || {}, { isUpdate: false });
@@ -148,7 +150,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PUT /api/news/:id -> edit/publish
+// UPDATE
 router.put('/:id', async (req, res) => {
   try {
     const id = Number(req.params.id);
@@ -172,7 +174,7 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE /api/news/:id -> hapus berita (ADD)
+// DELETE
 router.delete('/:id', async (req, res) => {
   try {
     const id = Number(req.params.id);

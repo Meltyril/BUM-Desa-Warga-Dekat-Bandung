@@ -1,7 +1,23 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 export default function Footer() {
+  const [loc, setLoc] = useState(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/location/business"); // endpoint dari backend kamu
+        if (!res.ok) throw new Error("Gagal memuat lokasi");
+        const data = await res.json();
+        setLoc(data);
+      } catch (e) {
+        setError(e.message || "Gagal memuat peta");
+      }
+    })();
+  }, []);
+
   return (
     <footer className="bg-[#e8ebe9] py-12 px-6">
       <div className="max-w-6xl mx-auto">
@@ -75,8 +91,52 @@ export default function Footer() {
 
           {/* Lokasi */}
           <div>
-            <h3 className="font-semibold mb-4 text-[#3d4f45]">Lokasi</h3>
-            <div className="bg-gray-300 h-32 rounded"></div>
+            <h3 className="font-semibold mb-2 text-[#3d4f45]">Lokasi</h3>
+
+            {/* Loading skeleton */}
+            {!loc && !error && (
+              <div className="bg-gray-300 h-32 md:h-40 rounded animate-pulse" />
+            )}
+
+            {/* Error */}
+            {error && <p className="text-red-600 text-sm">{error}</p>}
+
+            {/* Map */}
+            {loc && (
+              <>
+                <div className="relative w-full rounded overflow-hidden bg-gray-300"
+                     style={{ paddingBottom: "56.25%" /* 16:9 */ }}>
+                  <iframe
+                    title={`Peta ${loc.name || "Lokasi"}`}
+                    src={loc.embedUrl}
+                    className="absolute inset-0 w-full h-full border-0"
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    allowFullScreen
+                  />
+                </div>
+
+                <div className="text-sm mt-2">
+                  <a
+                    href={loc.mapsUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[#3d4f45] hover:underline"
+                  >
+                    Lihat di Google Maps
+                  </a>
+                  <span className="mx-1 text-gray-500">·</span>
+                  <a
+                    href={loc.directionsUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[#3d4f45] hover:underline"
+                  >
+                    Petunjuk Arah
+                  </a>
+                </div>
+              </>
+            )}
           </div>
         </div>
 

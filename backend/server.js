@@ -2,6 +2,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const path = require('path'); // [NEW]
 const { pool } = require('./db'); // ⬅️ pakai MySQL pool
 
 const app = express();
@@ -17,7 +18,8 @@ app.use((req, _res, next) => {
 });
 
 // Health & root routes (buat tes cepat)
-app.get('/', (_req, res) => {
+// ⬇️ Ganti '/' jadi '/status' agar root ('/') bisa dipakai untuk SPA frontend
+app.get('/status', (_req, res) => {
   res.send('Backend is running 🚀');
 });
 
@@ -96,7 +98,7 @@ app.get('/api/products/:id', async (req, res) => {
   try {
     const id = Number(req.params.id);
     const [rows] = await pool.execute('SELECT * FROM products WHERE id = ?', [id]);
-    if (rows.length === 0) {
+  if (rows.length === 0) {
       return res.status(404).json({ error: 'Produk tidak ditemukan' });
     }
     return res.json({ data: rows[0] });
@@ -164,7 +166,6 @@ app.delete('/api/products/:id', async (req, res) => {
 
 
 // LOKASI / MAPS (Footer)
-
 app.get('/api/location/business', (_req, res) => {
   const name    = process.env.BUSINESS_NAME || 'Lokasi';
   const address = process.env.BUSINESS_ADDRESS || '';
@@ -183,7 +184,24 @@ app.get('/api/location/business', (_req, res) => {
   res.json({ name, address, lat, lng, mapsUrl, directionsUrl, embedUrl });
 });
 
+
+// =======================
+// [NEW] SERVE FRONTEND BUILD (SPA)
+// =======================
+// Lokasi folder build frontend (bisa diubah via env FRONTEND_DIST)
+const FRONTEND_DIST = process.env.FRONTEND_DIST || path.join(__dirname, 'dist');
+
+// Serve file statis dari build frontend
+app.use(express.static(FRONTEND_DIST));
+
+// ✅ Fallback baru yang kompatibel Express 5
+app.get(/^\/(?!api).*/, (req, res) => {
+  res.sendFile(path.join(FRONTEND_DIST, 'index.html'));
+});
+
+
 // 404 & Error handlers
+// Handler 404 khusus API (karena route SPA di atas sudah menangani non-API)
 app.use((req, res) => {
   res.status(404).json({ error: `Route ${req.method} ${req.originalUrl} tidak ditemukan` });
 });
@@ -197,4 +215,5 @@ app.use((err, _req, res, _next) => {
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`[server] listening on http://localhost:${PORT}`);
+  console.log(`[server] serving frontend from: ${FRONTEND_DIST}`);
 });
