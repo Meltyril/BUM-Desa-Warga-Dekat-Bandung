@@ -69,6 +69,12 @@ const getBySlug = async (slug) => {
   return rows[0] || null;
 };
 
+// === NEW: cek apakah slug sudah dipakai ===
+const isSlugTaken = async (slug) => {
+  const [rows] = await pool.query('SELECT 1 FROM news WHERE slug = ? LIMIT 1', [slug]);
+  return rows.length > 0;
+};
+
 const createNews = async ({ title, slug, summary, body, cover_url, status = 'draft', published_at = null }) => {
   const [res] = await pool.query(
     `INSERT INTO news (title, slug, summary, body, cover_url, status, published_at)
@@ -123,7 +129,9 @@ module.exports = {
   listPublished,
   countPublished,
   getBySlug,
+  isSlugTaken,   // ⬅️ ditambahkan
   createNews,
   updateNews,
   deleteNews,
 };
+

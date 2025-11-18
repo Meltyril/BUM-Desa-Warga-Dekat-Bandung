@@ -120,13 +120,21 @@ router.get('/:slug', async (req, res) => {
   }
 });
 
-// CREATE
+// CREATE (auto-unique slug)
 router.post('/', async (req, res) => {
   try {
     const v = validateNewsPayload(req.body || {}, { isUpdate: false });
     if (!v.ok) return res.status(400).json({ error: v.errors.join(', ') });
 
-    const slug = slugify(req.body.slug || v.data.title);
+    const base = slugify(req.body.slug || v.data.title);
+    let slug = base;
+    // tambahkan suffix -2, -3, ... jika bentrok
+    for (let i = 1; i <= 100; i++) {
+      const candidate = i === 1 ? base : `${base}-${i}`;
+      const taken = await News.isSlugTaken(candidate);
+      if (!taken) { slug = candidate; break; }
+    }
+    if (!slug) return res.status(409).json({ error: 'cannot generate unique slug' });
 
     const id = await News.createNews({
       title: v.data.title,
