@@ -17,11 +17,11 @@ try {
   });
 }
 
-// === listPublished with search ?q= + sort ===
+// === listPublished with search ?q= + sort + soft delete ===
 const listPublished = async ({ page = 1, pageSize = 10, q = '', sort = 'latest' } = {}) => {
   const offset = (page - 1) * pageSize;
 
-  const where = ["status = 'published'"];
+  const where = ["status = 'published'", 'deleted_at IS NULL'];
   const params = [];
   if (q) {
     where.push('(title LIKE ? OR summary LIKE ? OR body LIKE ?)');
@@ -43,9 +43,9 @@ const listPublished = async ({ page = 1, pageSize = 10, q = '', sort = 'latest' 
   return rows;
 };
 
-// === NEW: hitung total published (untuk pagination meta) ===
+// === hitung total published (untuk pagination meta) + soft delete ===
 const countPublished = async ({ q = '' } = {}) => {
-  const where = ["status = 'published'"];
+  const where = ["status = 'published'", 'deleted_at IS NULL'];
   const params = [];
   if (q) {
     where.push('(title LIKE ? OR summary LIKE ? OR body LIKE ?)');
@@ -63,13 +63,93 @@ const getBySlug = async (slug) => {
   const [rows] = await pool.query(
     `SELECT id, title, slug, summary, body, cover_url, status, published_at,
             created_at, updated_at
-     FROM news WHERE slug = ? LIMIT 1`,
+     FROM news
+     WHERE slug = ? AND deleted_at IS NULL
+     LIMIT 1`,
     [slug]
   );
   return rows[0] || null;
 };
 
-// === NEW: cek apakah slug sudah dipakai ===
+// === ADMIN: list semua berita (draft/published; optional termasuk deleted) ===
+const listAdmin = async ({
+  page = 1,
+  pageSize = 10,
+  q = '',
+  sort = 'latest',
+  status = 'all',           // 'all' | 'draft' | 'published'
+  includeDeleted = false,   // true menampilkan yang deleted juga
+} = {}) => {
+  const offset = (page - 1) * pageSize;
+
+  const where = [];
+  const params = [];
+
+  // filter status
+  if (status === 'draft' || status === 'published') {
+    where.push('status = ?');
+    params.push(status);
+  } else {
+    where.push("status IN ('draft','published')");
+  }
+
+  // filter deleted
+  if (!includeDeleted) where.push('deleted_at IS NULL');
+
+  // search
+  if (q) {
+    where.push('(title LIKE ? OR summary LIKE ? OR body LIKE ?)');
+    params.push(`%${q}%`, `%${q}%`, `%${q}%`);
+  }
+
+  const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+
+  // urutan: pakai published_at kalau ada, fallback ke created_at
+  const order = (sort === 'oldest') ? 'ASC' : 'DESC';
+
+  const [rows] = await pool.query(
+    `SELECT id, title, slug, status, deleted_at, summary, cover_url,
+            published_at, created_at, updated_at
+     FROM news
+     ${whereSql}
+     ORDER BY COALESCE(published_at, created_at) ${order}
+     LIMIT ? OFFSET ?`,
+    [...params, pageSize, offset]
+  );
+  return rows;
+};
+
+const countAdmin = async ({
+  q = '',
+  status = 'all',
+  includeDeleted = false,
+} = {}) => {
+  const where = [];
+  const params = [];
+
+  if (status === 'draft' || status === 'published') {
+    where.push('status = ?');
+    params.push(status);
+  } else {
+    where.push("status IN ('draft','published')");
+  }
+
+  if (!includeDeleted) where.push('deleted_at IS NULL');
+
+  if (q) {
+    where.push('(title LIKE ? OR summary LIKE ? OR body LIKE ?)');
+    params.push(`%${q}%`, `%${q}%`, `%${q}%`);
+  }
+
+  const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+  const [[{ total }]] = await pool.query(
+    `SELECT COUNT(*) AS total FROM news ${whereSql}`,
+    params
+  );
+  return total;
+};
+
+// cek apakah slug sudah dipakai
 const isSlugTaken = async (slug) => {
   const [rows] = await pool.query('SELECT 1 FROM news WHERE slug = ? LIMIT 1', [slug]);
   return rows.length > 0;
@@ -86,8 +166,11 @@ const createNews = async ({ title, slug, summary, body, cover_url, status = 'dra
 
 // UPDATE news by id (edit/publish)
 const updateNews = async (id, { title, slug, summary, body, cover_url, status, published_at }) => {
-  // cek data existing
-  const [rows] = await pool.query('SELECT * FROM news WHERE id = ? LIMIT 1', [id]);
+  // cek data existing (boleh edit hanya yang belum di-soft-delete)
+  const [rows] = await pool.query(
+    'SELECT * FROM news WHERE id = ? AND deleted_at IS NULL LIMIT 1',
+    [id]
+  );
   if (!rows.length) return { ok: false, reason: 'not_found' };
   const prev = rows[0];
 
@@ -119,9 +202,27 @@ const updateNews = async (id, { title, slug, summary, body, cover_url, status, p
   }
 };
 
-// === NEW: hapus news by id ===
+// hard delete (kalau butuh benar-benar hapus row)
 const deleteNews = async (id) => {
   const [res] = await pool.query('DELETE FROM news WHERE id = ?', [id]);
+  return res.affectedRows > 0;
+};
+
+// soft delete: tandai deleted_at tanpa menghapus row
+const softDeleteNews = async (id) => {
+  const [res] = await pool.query(
+    'UPDATE news SET deleted_at = NOW() WHERE id = ? AND deleted_at IS NULL',
+    [id]
+  );
+  return res.affectedRows > 0;
+};
+
+// restore: kembalikan deleted_at ke NULL
+const restoreNews = async (id) => {
+  const [res] = await pool.query(
+    'UPDATE news SET deleted_at = NULL WHERE id = ? AND deleted_at IS NOT NULL',
+    [id]
+  );
   return res.affectedRows > 0;
 };
 
@@ -129,9 +230,14 @@ module.exports = {
   listPublished,
   countPublished,
   getBySlug,
-  isSlugTaken,   // ⬅️ ditambahkan
+  isSlugTaken,
   createNews,
   updateNews,
-  deleteNews,
-};
+  deleteNews,      // optional: hard delete
+  softDeleteNews,  // dipakai di route DELETE
+  restoreNews,     // dipakai di route PATCH /:id/restore
 
+  // admin
+  listAdmin,
+  countAdmin,
+};

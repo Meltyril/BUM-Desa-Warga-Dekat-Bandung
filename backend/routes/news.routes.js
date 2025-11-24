@@ -108,6 +108,41 @@ router.get('/', async (req, res) => {
   }
 });
 
+/* ===== ADMIN LIST: semua berita (draft/published, optional termasuk deleted) =====
+   query: ?page=&pageSize=&q=&sort=latest|oldest&status=all|draft|published&includeDeleted=true|false
+*/
+router.get('/admin', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page || '1', 10);
+    const pageSize = parseInt(req.query.pageSize || '10', 10);
+    const q = (req.query.q || '').toString().trim();
+    const sortRaw = (req.query.sort || 'latest').toString().toLowerCase();
+    const sort = ['latest', 'oldest'].includes(sortRaw) ? sortRaw : 'latest';
+    const statusRaw = (req.query.status || 'all').toString().toLowerCase();
+    const status = ['all', 'draft', 'published'].includes(statusRaw) ? statusRaw : 'all';
+    const includeDeleted = String(req.query.includeDeleted || 'false').toLowerCase() === 'true';
+
+    const [data, total] = await Promise.all([
+      News.listAdmin({ page, pageSize, q, sort, status, includeDeleted }),
+      News.countAdmin({ q, status, includeDeleted }),
+    ]);
+
+    res.json({
+      meta: {
+        total,
+        page,
+        limit: pageSize,
+        pages: Math.max(1, Math.ceil(total / pageSize)),
+        q, sort, status, includeDeleted,
+      },
+      data,
+    });
+  } catch (err) {
+    console.error('[news:admin-list]', err);
+    res.status(500).json({ error: 'failed to fetch admin news' });
+  }
+});
+
 // DETAIL
 router.get('/:slug', async (req, res) => {
   try {
@@ -182,16 +217,34 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE
+// RESTORE (batalkan soft delete)
+router.patch('/:id/restore', async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) return res.status(400).json({ error: 'invalid id' });
+
+    const ok = await News.restoreNews(id);
+    if (!ok) {
+      return res.status(404).json({ error: 'news not found or not deleted' });
+    }
+
+    res.json({ ok: true, restored: true });
+  } catch (err) {
+    console.error('[news:restore]', err);
+    res.status(500).json({ error: 'failed to restore news' });
+  }
+});
+
+// DELETE (soft delete)
 router.delete('/:id', async (req, res) => {
   try {
     const id = Number(req.params.id);
     if (!Number.isFinite(id)) return res.status(400).json({ error: 'invalid id' });
 
-    const ok = await News.deleteNews(id);
-    if (!ok) return res.status(404).json({ error: 'news not found' });
+    const ok = await News.softDeleteNews(id);
+    if (!ok) return res.status(404).json({ error: 'news not found or already deleted' });
 
-    res.json({ ok: true });
+    res.json({ ok: true, softDeleted: true });
   } catch (err) {
     console.error('[news:delete]', err);
     res.status(500).json({ error: 'failed to delete news' });
