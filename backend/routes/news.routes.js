@@ -1,7 +1,9 @@
-// backend/routes/news.routes.js
 const express = require('express');
 const router = express.Router();
 const News = require('../models/news.model');
+
+// === Import middleware auth ===
+const auth = require('../middleware/auth');
 
 // util kecil buat slug
 function slugify(text = '') {
@@ -77,7 +79,7 @@ function validateNewsPayload(payload, { isUpdate = false } = {}) {
   return { ok: errors.length === 0, errors, data: out };
 }
 
-/* ===== LIST: +search +meta +sort ===== */
+/* ===== LIST BERITA PUBLIK ===== */
 router.get('/', async (req, res) => {
   try {
     const page = parseInt(req.query.page || '1', 10);
@@ -108,10 +110,8 @@ router.get('/', async (req, res) => {
   }
 });
 
-/* ===== ADMIN LIST: semua berita (draft/published, optional termasuk deleted) =====
-   query: ?page=&pageSize=&q=&sort=latest|oldest&status=all|draft|published&includeDeleted=true|false
-*/
-router.get('/admin', async (req, res) => {
+/* ===== LIST ADMIN (HARUS LOGIN ADMIN) ===== */
+router.get('/admin', auth, async (req, res) => {
   try {
     const page = parseInt(req.query.page || '1', 10);
     const pageSize = parseInt(req.query.pageSize || '10', 10);
@@ -143,7 +143,7 @@ router.get('/admin', async (req, res) => {
   }
 });
 
-// DETAIL
+// DETAIL PUBLIK
 router.get('/:slug', async (req, res) => {
   try {
     const row = await News.getBySlug(req.params.slug);
@@ -155,20 +155,21 @@ router.get('/:slug', async (req, res) => {
   }
 });
 
-// CREATE (auto-unique slug)
-router.post('/', async (req, res) => {
+// CREATE (HARUS LOGIN ADMIN)
+router.post('/', auth, async (req, res) => {
   try {
     const v = validateNewsPayload(req.body || {}, { isUpdate: false });
     if (!v.ok) return res.status(400).json({ error: v.errors.join(', ') });
 
     const base = slugify(req.body.slug || v.data.title);
     let slug = base;
-    // tambahkan suffix -2, -3, ... jika bentrok
+
     for (let i = 1; i <= 100; i++) {
       const candidate = i === 1 ? base : `${base}-${i}`;
       const taken = await News.isSlugTaken(candidate);
       if (!taken) { slug = candidate; break; }
     }
+
     if (!slug) return res.status(409).json({ error: 'cannot generate unique slug' });
 
     const id = await News.createNews({
@@ -193,8 +194,8 @@ router.post('/', async (req, res) => {
   }
 });
 
-// UPDATE
-router.put('/:id', async (req, res) => {
+// UPDATE (HARUS LOGIN ADMIN)
+router.put('/:id', auth, async (req, res) => {
   try {
     const id = Number(req.params.id);
     if (!Number.isFinite(id)) return res.status(400).json({ error: 'invalid id' });
@@ -217,8 +218,8 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// RESTORE (batalkan soft delete)
-router.patch('/:id/restore', async (req, res) => {
+// RESTORE (HARUS LOGIN ADMIN)
+router.patch('/:id/restore', auth, async (req, res) => {
   try {
     const id = Number(req.params.id);
     if (!Number.isFinite(id)) return res.status(400).json({ error: 'invalid id' });
@@ -235,8 +236,8 @@ router.patch('/:id/restore', async (req, res) => {
   }
 });
 
-// DELETE (soft delete)
-router.delete('/:id', async (req, res) => {
+// DELETE (HARUS LOGIN ADMIN)
+router.delete('/:id', auth, async (req, res) => {
   try {
     const id = Number(req.params.id);
     if (!Number.isFinite(id)) return res.status(400).json({ error: 'invalid id' });

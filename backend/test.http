@@ -27,3 +27,50 @@ Content-Type: application/json
 
 ### DELETE (hapus produk dengan ID 1)
 DELETE http://localhost:5000/api/products/9
+
+### TEST ADMIN
+GET http://localhost:5000/api/admin/test
+
+### ADMIN LOGIN (Dapat Token)
+POST http://localhost:5000/api/admin/login
+Content-Type: application/json
+
+{
+  "email": "admin@gmail.com",
+  "password": "BUKITSINYONYA22"
+}
+
+### TEST ENDPOINT TERPROTEKSI (HARUS PAKAI TOKEN)
+GET http://localhost:5000/api/admin/profile
+# Ganti <token> dengan token hasil login
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhZG1pbkBnbWFpbC5jb20iLCJpYXQiOjE3NjUzNjI4NjAsImV4cCI6MTc2NTQ0OTI2MH0.v51phy7xhBTMNGiOdLhO54BZjYsV1I9LdhaqfpQyaRQ
+
+### FORGOT PASSWORD
+POST http://localhost:5000/api/admin/forgot-password
+Content-Type: application/json
+
+{
+  "email": "admin@gmail.com"
+}
+
+### RESET PASSWORD (pakai token dari hasil forgot-password)
+POST http://localhost:5000/api/admin/reset-password
+Content-Type: application/json
+
+{
+  "token": "766e80036c8ce04320c2f92fd43bace5500f499ddd62436f9dcbf7760e7a30a8",
+  "new_password": "BUKITSINYONYA22"
+} 
+
+### VERIFY RESET TOKEN
+GET http://localhost:5000/api/admin/reset-password/verify?token=766e80036c8ce04320c2f92fd43bace5500f499ddd62436f9dcbf7760e7a30a8 
+
+### TEST ADMIN NEWS TANPA TOKEN (HARUS GAGAL)
+GET http://localhost:5000/api/news/admin
+
+### TEST ADMIN NEWS DENGAN TOKEN (HARUS BERHASIL)
+GET http://localhost:5000/api/news/admin
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhZG1pbkBnbWFpbC5jb20iLCJpYXQiOjE3NjU4ODUxNTYsImV4cCI6MTc2NTk3MTU1Nn0.hFJYVioSm5bvWKsA30ufDvt4TJ7DJsbmW55AkWR1Nh4
+
+
+

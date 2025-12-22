@@ -32,6 +32,11 @@ const newsRoutes = require('./routes/news.routes');
 app.use('/api/news', newsRoutes);
 /* ============================================ */
 
+/* ======== [ADD] ADMIN ROUTES (BARU) ======== */
+const adminRoutes = require('./routes/admin.routes');
+app.use('/api/admin', adminRoutes);
+/* ========================================== */
+
 // =======================
 // PRODUCTS (MySQL)
 // =======================
@@ -98,7 +103,7 @@ app.get('/api/products/:id', async (req, res) => {
   try {
     const id = Number(req.params.id);
     const [rows] = await pool.execute('SELECT * FROM products WHERE id = ?', [id]);
-  if (rows.length === 0) {
+    if (rows.length === 0) {
       return res.status(404).json({ error: 'Produk tidak ditemukan' });
     }
     return res.json({ data: rows[0] });
@@ -198,7 +203,6 @@ app.use(express.static(FRONTEND_DIST));
 app.get(/^\/(?!api).*/, (req, res) => {
   res.sendFile(path.join(FRONTEND_DIST, 'index.html'));
 });
-
 
 // 404 & Error handlers
 // Handler 404 khusus API (karena route SPA di atas sudah menangani non-API)
