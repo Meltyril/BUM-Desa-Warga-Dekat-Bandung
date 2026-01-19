@@ -181,14 +181,18 @@ app.get('/api/location/business', (_req, res) => {
     return res.status(500).json({ error: 'Koordinat bisnis belum di-set di .env' });
   }
 
-  // Link peta & rute Google Maps
-  const mapsUrl       = `https://www.google.com/maps?q=${lat},${lng}`;
-  const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
-  const embedUrl      = `https://www.google.com/maps?q=${lat},${lng}&hl=id&z=16&output=embed`;
+  // ✅ Klik: buka Google Maps tepat ke koordinat (format Maps URLs, api=1 wajib)
+  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`; // [web:98]
+
+  // ✅ Klik: petunjuk arah ke koordinat
+  const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`; // [web:98]
+
+  // ✅ Tampilan gambar peta (iframe) tanpa API key
+  // Catatan: ini bukan Maps Embed API resmi, tapi biasanya paling “langsung jadi”.
+  const embedUrl = `https://maps.google.com/maps?q=${lat},${lng}&t=m&z=16&output=embed`; // [web:125]
 
   res.json({ name, address, lat, lng, mapsUrl, directionsUrl, embedUrl });
 });
-
 
 // =======================
 // [NEW] SERVE FRONTEND BUILD (SPA)
