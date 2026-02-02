@@ -13,7 +13,6 @@ function AdminSection() {
   return (
     <section
       id="admin-section"
-      role="region"
       aria-labelledby="admin-section-title"
       className="mt-10 rounded-2xl border border-gray-200 p-6 shadow-sm bg-white"
     >

@@ -173,7 +173,7 @@ app.delete('/api/products/:id', async (req, res) => {
 // LOKASI / MAPS (Footer)
 app.get('/api/location/business', (_req, res) => {
   const name    = process.env.BUSINESS_NAME || 'Lokasi';
-  const address = process.env.BUSINESS_ADDRESS || '';
+  const address = process.env.BUSINESS_ADDRESS || 'Alamat';
   const lat     = Number(process.env.BUSINESS_LAT);
   const lng     = Number(process.env.BUSINESS_LNG);
 
