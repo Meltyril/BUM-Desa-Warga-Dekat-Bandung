@@ -304,9 +304,11 @@ export default function Homepage({ isAdmin, AdminSection }) {
             tumbuh kembangkan dari local. Hubungi kontak tim Anda dan pilih
             dengan tepat serta dapatkan info lengkapnya.
           </p>
-          <button className="bg-[#3d4f45] text-white px-8 py-3 rounded-full text-sm hover:bg-[#4a5a50] transition">
+          <button onClick={() => window.open("https://wa.me/6288290367299", "_blank")} 
+          className="bg-[#3d4f45] text-white px-8 py-3 rounded-full text-sm hover:bg-[#4a5a50] transition">
             HUBUNGI KAMI
           </button>
+
         </div>
       </section>
 
