@@ -33,12 +33,9 @@ export default function AboutUs({ isAdmin, AdminSection }) {
             BUM Desa Warga Dekat Bandung
           </h2>
           <p className="text-gray-600 leading-relaxed text-sm mb-6">
-            Amet, urna egestas et ultrices tellus socis. Pharetra mauris viverra
-            rutrum at tincidunt aenean neque gravida. Cursus sit at risus
-            pellentesque sed interdum sit non. In vel sit blanque non tempor, ut
-            praesent. Nisi at orci turpis sapien sit. Donec arcu porttitor lorem
-            et nibh commodo lacus et. Convallis aliquet elit, quam laoreet
-            habitant lacus, ut bibendum at.
+            Kami dengan bangga mempersembahkan produk-produk unggulan dari Desa Warga Dekat Bandung,
+            hasil karya masyarakat lokal yang berkualitas dan bernilai tinggi. Belanja disini berarti
+            Anda ikut mendukung perekonomian desa serta keberlanjutan produk lokal.
           </p>
           <button className="bg-[#3d4f45] text-white px-8 py-3 rounded-full text-sm hover:bg-[#4a5a50] transition">
             PELAJARI LEBIH
