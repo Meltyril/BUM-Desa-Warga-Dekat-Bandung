@@ -64,11 +64,12 @@ export default function Homepage({ isAdmin, AdminSection }) {
         <div className="absolute top-1/4 w-32 h-32 bg-[#a8b5aa] rounded-full opacity-60"></div>
         <div className="text-center z-10 px-4">
           <h1 className="text-4xl md:text-5xl text-[#3d4f45] mb-4 font-light">
-            Lorem Ipsum Dolor Sit Amet
+            Selamat Datang
           </h1>
           <p className="text-[#4a5a50] max-w-2xl mx-auto text-sm leading-relaxed">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
-            eiusmod tempor incididunt ut labore et dolore magna aliqua.
+            Selamat Datang di BUM Desa Warga Dekat Bandung, 
+            sebuah persembahan dari cinta kami pada alam dan keinginan untuk membagikan keajaiban potensi desa 
+            serta kegiatan ekonomi yang berkelanjutan kepada Anda.
           </p>
         </div>
         <div className="absolute bottom-0 w-full h-1/2 bg-gradient-to-t from-[#a8b5aa] to-transparent"></div>
@@ -85,12 +86,9 @@ export default function Homepage({ isAdmin, AdminSection }) {
             BUM Desa Warga Dekat Bandung
           </h2>
           <p className="text-gray-600 leading-relaxed mb-8 text-sm">
-            Amet, urna egestas et ultrices tellus socis. Pharetra mauris viverra
-            rutrum at tincidunt aenean neque gravida. Cursus sit at risus
-            pellentesque sed interdum sit non. In vel sit blanque non tempor, ut
-            praesent. Nisi at orci turpis sapien sit. Donec arcu porttitor lorem
-            et nibh commodo lacus et. Convallis aliquet elit, quam laoreet
-            habitant lacus, ut bibendum at.
+            Kami Dengan bangga mempersembahkan produk-produk lokal unggulan dari Desa Warga Dekat Bandung.
+            hasil karya masyarakat lokal yang berkualitas dan bernilai tinggi.
+            Belanja di sini Anda ikut mendukung perekonomian desa serta keberlanjutan produk lokal.
           </p>
           <button className="bg-[#3d4f45] text-white px-8 py-3 rounded-full text-sm hover:bg-[#4a5a50] transition">
             ABOUT US
