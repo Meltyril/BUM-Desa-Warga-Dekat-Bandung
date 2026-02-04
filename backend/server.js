@@ -5,6 +5,13 @@ const cors = require('cors');
 const path = require('path'); // [NEW]
 const { pool } = require('./db'); // ⬅️ pakai MySQL pool
 
+// ===== Env sanity check =====
+// Beri peringatan awal jika variabel lingkungan penting tidak di-set
+if (!process.env.JWT_SECRET) {
+  console.warn('[warning] JWT_SECRET not set. Admin authentication endpoints will fail until you set JWT_SECRET in backend/.env');
+}
+// ==========================
+
 const app = express();
 
 // Global middleware

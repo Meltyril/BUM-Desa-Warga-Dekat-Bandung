@@ -37,6 +37,9 @@ export default function Navbar() {
           <Link to="/contact" className="hover:text-[#b8c5ba] transition">
             CONTACT
           </Link>
+          <Link to="/admin" className="hover:text-[#b8c5ba] transition">
+            ADMIN
+          </Link>
         </div>
 
         <Link
@@ -100,6 +103,13 @@ export default function Navbar() {
               onClick={() => setMobileMenuOpen(false)}
             >
               CONTACT
+            </Link>
+            <Link
+              to="/admin"
+              className="text-left px-4 hover:text-[#b8c5ba] py-2"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              ADMIN
             </Link>
           </div>
         </div>

@@ -9,6 +9,11 @@ function auth(req, res, next) {
 
   const token = authHeader.split(' ')[1];
 
+  if (!process.env.JWT_SECRET) {
+    console.error('[auth] Missing JWT_SECRET environment variable');
+    return res.status(500).json({ message: 'JWT_SECRET belum di-set di server' });
+  }
+
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.admin = decoded; // simpan data admin ke request

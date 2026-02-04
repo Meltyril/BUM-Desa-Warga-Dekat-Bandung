@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import Homepage from "./components/Homepage";
 import AboutUs from "./components/AboutUs";
 import Products from "./components/Products";
@@ -8,6 +8,8 @@ import Services from "./components/Services";
 import News from "./components/News";
 import NewsDetail from "./components/NewsDetail";
 import Contact from "./components/Contact";
+import AdminLogin from "./components/AdminLogin";
+import AdminDashboard from "./components/AdminDashboard";
 
 function AdminSection() {
   return (
@@ -23,16 +25,16 @@ function AdminSection() {
         >
           Admin Panel (Quick Actions)
         </h2>
-        <a
-          href="/admin"
+        <Link
+          to="/admin"
           className="rounded-xl border border-[#3d4f45] px-3 py-1 text-sm text-[#3d4f45] hover:bg-[#3d4f45] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3d4f45] transition"
         >
           Buka Halaman Admin →
-        </a>
+        </Link>
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <a
-          href="/admin/users"
+        <Link
+          to="/admin/users"
           className="rounded-2xl border border-gray-200 p-4 hover:shadow-md hover:border-[#3d4f45] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3d4f45] transition"
           aria-label="Kelola pengguna"
         >
@@ -42,9 +44,9 @@ function AdminSection() {
           <p className="text-sm text-gray-600">
             Tambah, edit, nonaktifkan user.
           </p>
-        </a>
-        <a
-          href="/admin/posts"
+        </Link>
+        <Link
+          to="/admin/posts"
           className="rounded-2xl border border-gray-200 p-4 hover:shadow-md hover:border-[#3d4f45] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3d4f45] transition"
           aria-label="Kelola konten"
         >
@@ -54,17 +56,17 @@ function AdminSection() {
           <p className="text-sm text-gray-600">
             Artikel, banner, & landing copy.
           </p>
-        </a>
-        <a
-          href="/admin/reports"
+        </Link>
+        <Link
+          to="/admin/reports"
           className="rounded-2xl border border-gray-200 p-4 hover:shadow-md hover:border-[#3d4f45] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3d4f45] transition"
           aria-label="Lihat laporan"
         >
           <h3 className="mb-1 text-base font-medium text-[#3d4f45]">Laporan</h3>
           <p className="text-sm text-gray-600">Traffic, signup, konversi.</p>
-        </a>
-        <a
-          href="/admin/settings"
+        </Link>
+        <Link
+          to="/admin/settings"
           className="rounded-2xl border border-gray-200 p-4 hover:shadow-md hover:border-[#3d4f45] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3d4f45] transition"
           aria-label="Pengaturan situs"
         >
@@ -72,7 +74,7 @@ function AdminSection() {
             Pengaturan
           </h3>
           <p className="text-sm text-gray-600">General, SEO, & integrasi.</p>
-        </a>
+        </Link>
       </div>
     </section>
   );
@@ -122,6 +124,10 @@ export default function App() {
             path="/contact"
             element={<Contact isAdmin={isAdmin} AdminSection={AdminSection} />}
           />
+
+          {/* Admin routes */}
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin" element={<AdminDashboard />} />
         </Routes>
       </div>
     </Router>

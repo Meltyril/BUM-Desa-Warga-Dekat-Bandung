@@ -35,6 +35,12 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ message: 'Email atau password salah' });
     }
 
+    // pastikan JWT secret tersedia
+    if (!process.env.JWT_SECRET) {
+      console.error('[admin:login] Missing JWT_SECRET environment variable');
+      return res.status(500).json({ message: 'JWT_SECRET belum di-set di server' });
+    }
+
     // BUAT TOKEN JWT
     const token = jwt.sign(
       {
