@@ -1,42 +1,34 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
+import { fetchProductsList } from "../src/api/productsApi";
 
 export default function Products({ isAdmin, AdminSection }) {
   const [activeCategory, setActiveCategory] = useState("SEMUA");
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   const categories = ["SEMUA", "PERTANIAN", "KERAJINAN", "OLAHAN"];
 
-  const products = [
-    {
-      id: 1,
-      category: "PERTANIAN",
-      name: "Kopi Puhu",
-      description:
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-    },
-    {
-      id: 2,
-      category: "PERTANIAN",
-      name: "Kopi Puhu",
-      description:
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-    },
-    {
-      id: 3,
-      category: "PERTANIAN",
-      name: "Kopi Puhu",
-      description:
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-    },
-    {
-      id: 4,
-      category: "PERTANIAN",
-      name: "Kopi Puhu",
-      description:
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-    },
-  ];
+  useEffect(() => {
+    async function loadProducts() {
+      try {
+        setLoading(true);
+        setError('');
+        const response = await fetchProductsList({ limit: 50 });
+        setProducts(response.data || []);
+      } catch (err) {
+        console.error('Error loading products:', err);
+        setError('Gagal memuat produk');
+        // Fallback to empty array if API fails
+        setProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadProducts();
+  }, []);
 
   return (
     <div className="min-h-screen bg-white font-serif">
@@ -86,31 +78,75 @@ export default function Products({ isAdmin, AdminSection }) {
             ))}
           </div>
 
+          {/* Loading State */}
+          {loading && (
+            <div className="text-center py-12">
+              <p className="text-gray-600">Sedang memuat produk...</p>
+            </div>
+          )}
+
+          {/* Error State */}
+          {error && !loading && (
+            <div className="text-center py-12">
+              <p className="text-red-600">{error}</p>
+            </div>
+          )}
+
+          {/* Empty State */}
+          {!loading && !error && products.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-gray-600">Belum ada produk yang ditambahkan</p>
+            </div>
+          )}
+
           {/* Products Grid */}
-          <div className="grid md:grid-cols-2 gap-12">
-            {products.map((product) => (
-              <div key={product.id} className="flex flex-col md:flex-row gap-6">
-                <div className="bg-[#b8c5ba] w-full md:w-1/2 h-64 relative flex-shrink-0 rounded-lg">
-                  <div className="absolute top-1/3 left-1/2 transform -translate-x-1/2 w-20 h-20 bg-[#a8b5aa] rounded-full"></div>
-                  <div className="absolute bottom-0 w-full h-1/2 bg-gradient-to-t from-[#a8b5aa] to-transparent rounded-b-lg"></div>
+          {!loading && products.length > 0 && (
+            <div className="grid md:grid-cols-2 gap-12">
+              {products.map((product) => (
+                <div key={product.id} className="flex flex-col md:flex-row gap-6">
+                  {product.image_url ? (
+                    <img 
+                      src={`http://localhost:5000${product.image_url}`}
+                      alt={product.name}
+                      className="w-full md:w-1/2 h-64 object-cover rounded-lg"
+                    />
+                  ) : (
+                    <div className="bg-[#b8c5ba] w-full md:w-1/2 h-64 relative flex-shrink-0 rounded-lg flex items-center justify-center">
+                      <div className="text-center">
+                        <div className="absolute top-1/3 left-1/2 transform -translate-x-1/2 w-20 h-20 bg-[#a8b5aa] rounded-full"></div>
+                        <p className="text-gray-500 text-sm">Tidak ada gambar</p>
+                      </div>
+                      <div className="absolute bottom-0 w-full h-1/2 bg-gradient-to-t from-[#a8b5aa] to-transparent rounded-b-lg"></div>
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <p className="text-xs text-gray-500 mb-2 tracking-wider">
+                      {product.category || "PRODUK"}
+                    </p>
+                    <h3 className="text-2xl mb-2 text-[#3d4f45]">
+                      {product.name}
+                    </h3>
+                    {product.price && (
+                      <p className="text-lg font-semibold text-[#3d4f45] mb-2">
+                        Rp {product.price.toLocaleString('id-ID')}
+                      </p>
+                    )}
+                    {product.stock !== undefined && (
+                      <p className="text-sm text-gray-600 mb-4">
+                        Stok: {product.stock} unit
+                      </p>
+                    )}
+                    <p className="text-gray-600 text-sm leading-relaxed mb-6">
+                      {product.description || "Produk berkualitas dari BUM Desa"}
+                    </p>
+                    <button className="bg-[#3d4f45] text-white px-6 py-2 rounded-full text-sm hover:bg-[#4a5a50] transition">
+                      DETAIL PRODUK
+                    </button>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <p className="text-xs text-gray-500 mb-2 tracking-wider">
-                    {product.category}
-                  </p>
-                  <h3 className="text-2xl mb-4 text-[#3d4f45]">
-                    {product.name}
-                  </h3>
-                  <p className="text-gray-600 text-sm leading-relaxed mb-6">
-                    {product.description}
-                  </p>
-                  <button className="bg-[#3d4f45] text-white px-6 py-2 rounded-full text-sm hover:bg-[#4a5a50] transition">
-                    DETAIL PRODUK
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 

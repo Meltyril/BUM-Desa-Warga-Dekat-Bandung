@@ -1,6 +1,10 @@
 // backend/routes/admin.routes.js
 const express = require('express');
-const bcrypt = require('bcrypt');
+const _bcryptjs = require('bcryptjs');
+const bcrypt = {
+  hash: (data, salt) => new Promise((resolve, reject) => _bcryptjs.hash(data, salt, (err, hashed) => err ? reject(err) : resolve(hashed))),
+  compare: (data, hashed) => new Promise((resolve, reject) => _bcryptjs.compare(data, hashed, (err, res) => err ? reject(err) : resolve(res)))
+};
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const router = express.Router();
