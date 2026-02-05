@@ -98,11 +98,14 @@ export default function Products({ isAdmin, AdminSection }) {
                   key={product.id}
                   className="flex flex-col md:flex-row gap-6"
                 >
-                  {/* Image Placeholder */}
-                  <div className="bg-[#b8c5ba] w-full md:w-1/2 h-64 relative flex-shrink-0 rounded-lg">
-                    <div className="absolute top-1/3 left-1/2 transform -translate-x-1/2 w-20 h-20 bg-[#a8b5aa] rounded-full"></div>
-                    <div className="absolute bottom-0 w-full h-1/2 bg-gradient-to-t from-[#a8b5aa] to-transparent rounded-b-lg"></div>
-                  </div>
+                  {/* Product Image */}
+                <div className="w-full md:w-1/2 h-64 relative flex-shrink-0 rounded-lg overflow-hidden">
+                <img
+                src={`http://localhost:5000${product.image_url}`}
+                alt={product.name}
+                className="w-full h-full object-cover"
+                />
+                </div>
 
                   {/* Content */}
                   <div className="flex-1">

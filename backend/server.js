@@ -11,6 +11,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+app.use('/images', express.static(path.join(__dirname, 'images'))); // ✅ wajib
+
+
 // Logger sederhana (lihat setiap request di terminal)
 app.use((req, _res, next) => {
   console.log(`[req] ${req.method} ${req.url}`);
