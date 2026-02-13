@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
+import { Link } from "react-router-dom";
+
 
 export default function News({ isAdmin, AdminSection }) {
 
@@ -83,14 +85,14 @@ export default function News({ isAdmin, AdminSection }) {
                     <h3 className="text-xl mb-3 text-[#3d4f45]">
                       {news.title}
                     </h3>
-
-                    <p className="text-gray-600 text-sm leading-relaxed mb-4">
-                      {news.summary}
-                    </p>
-
-                    <button className="text-sm text-[#3d4f45] hover:underline">
+                  
+                    <Link to={`/news/${news.id}`}
+                    className="text-sm text-[#3d4f45] hover:underline"
+                    >
                       Baca Selengkapnya →
-                    </button>
+                    </Link>
+
+
 
                   </div>
 
