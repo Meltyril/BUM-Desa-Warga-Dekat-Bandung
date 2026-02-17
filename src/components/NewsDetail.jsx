@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 
 export default function NewsDetail() {
 
   const { id } = useParams();
+  const navigate = useNavigate();
 
   const [news, setNews] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // FETCH NEWS
   useEffect(() => {
 
     fetch("http://localhost:5000/api/news")
@@ -20,7 +22,6 @@ export default function NewsDetail() {
           ? result.data
           : [];
 
-        // IMPORTANT → convert ID ke number
         const selectedNews = allNews.find(
           (item) => String(item.id) === String(id)
         );
@@ -48,45 +49,74 @@ export default function NewsDetail() {
 
       <Navbar />
 
-      {/* Cover Image */}
-      <div className="mt-16 h-96 overflow-hidden">
-        <img
-          src={
-            news.cover_url
-              ? `http://localhost:5000${news.cover_url}`
-              : "/no-image.jpg"
-          }
-          alt={news.title}
-          className="w-full h-full object-cover"
-        />
-      </div>
+      {/* Header Section */}
+      <section className="mt-16 bg-[#f5f7f6] py-10 px-6">
 
-      {/* Content */}
-      <div className="max-w-4xl mx-auto px-6 py-12">
+        <div className="max-w-6xl mx-auto">
 
-        <p className="text-sm text-gray-500 mb-3">
-          {news.published_at
-            ? new Date(news.published_at).toLocaleDateString("id-ID")
-            : ""}
-        </p>
+          {/* Back + Breadcrumb */}
+          <div className="flex justify-between items-center mb-8">
 
-        <h1 className="text-3xl text-[#3d4f45] mb-6">
-          {news.title}
-        </h1>
+            <button
+              onClick={() => navigate(-1)}
+              className="bg-[#3d4f45] text-white px-6 py-2 rounded-full text-sm"
+            >
+              KEMBALI
+            </button>
 
-        {/* SUMMARY */}
-        {news.summary && (
-          <p className="mb-6 text-lg text-gray-700">
-            {news.summary}
-          </p>
-        )}
+            <div className="text-sm text-gray-500">
+              Berita » {news.title}
+            </div>
 
-        {/* CONTENT */}
-        <div className="text-gray-700 leading-relaxed whitespace-pre-line">
-          {news.content}
+          </div>
+
+          {/* Cover Image */}
+          <div className="w-full h-96 rounded-xl overflow-hidden">
+            <img
+              src={
+                news.cover_url
+                  ? `http://localhost:5000${news.cover_url}`
+                  : "/no-image.jpg"
+              }
+              alt={news.title}
+              className="w-full h-full object-cover"
+            />
+          </div>
+
         </div>
 
-      </div>
+      </section>
+
+      {/* Content */}
+      <section className="py-12 px-6 bg-white">
+
+        <div className="max-w-4xl mx-auto">
+
+          {/* Label */}
+          <p className="text-xs text-gray-500 tracking-wider mb-2">
+            BERITA {news.id}
+          </p>
+
+          {/* Title */}
+          <h1 className="text-4xl text-[#3d4f45] mb-6 font-light">
+            {news.title}
+          </h1>
+
+          {/* Summary */}
+          {news.summary && (
+            <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+              {news.summary}
+            </p>
+          )}
+
+          {/* Body */}
+          <div className="text-gray-600 text-sm leading-relaxed whitespace-pre-line space-y-4">
+            {news.body}
+          </div>
+
+        </div>
+
+      </section>
 
       <Footer />
 
