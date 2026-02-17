@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
+import { Link } from "react-router-dom";
+
 
 export default function Products({ isAdmin, AdminSection }) {
   const [activeCategory, setActiveCategory] = useState("SEMUA");
@@ -126,9 +128,11 @@ export default function Products({ isAdmin, AdminSection }) {
                       {Number(product.price).toLocaleString("id-ID")}
                     </p>
 
-                    <button className="bg-[#3d4f45] text-white px-6 py-2 rounded-full text-sm hover:bg-[#4a5a50] transition">
+                    <Link to={`/products/${product.id}`}
+                    className="inline-block bg-[#3d4f45] text-white px-6 py-2 rounded-full text-sm hover:bg-[#4a5a50] transition"
+                    >
                       DETAIL PRODUK
-                    </button>
+                      </Link>
                   </div>
                 </div>
               ))}
