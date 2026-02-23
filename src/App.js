@@ -7,6 +7,7 @@ import ProductDetail from "./components/ProductDetail";
 import Services from "./components/Services";
 import News from "./components/News";
 import NewsDetail from "./components/NewsDetail";
+import ContentDetail from "./components/ContentDetail";
 import Contact from "./components/Contact";
 import AdminLogin from "./components/AdminLogin";
 import AdminDashboard from "./components/AdminDashboard";
@@ -114,12 +115,8 @@ export default function App() {
             path="/news"
             element={<News isAdmin={isAdmin} AdminSection={AdminSection} />}
           />
-          <Route
-            path="/news/:id"
-            element={
-              <NewsDetail isAdmin={isAdmin} AdminSection={AdminSection} />
-            }
-          />
+          <Route path="/news/:slug" element={<ContentDetail isAdmin={isAdmin} AdminSection={AdminSection} />} />
+          <Route path="/articles/:slug" element={<ContentDetail isAdmin={isAdmin} AdminSection={AdminSection} />} />
           <Route
             path="/contact"
             element={<Contact isAdmin={isAdmin} AdminSection={AdminSection} />}

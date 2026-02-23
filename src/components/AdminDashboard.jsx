@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { fetchAdminProfile } from '../src/api/adminApi';
 import { createProduct, fetchProductsList, updateProduct, deleteProduct } from '../src/api/productsApi';
 import { createNews, fetchAdminNewsList, updateNews, softDeleteNews } from '../src/api/newsApi';
+import { createArticle, fetchAdminArticlesList, updateArticle, softDeleteArticle } from '../src/api/articlesApi';
 import { getToken, removeToken } from '../utils/auth';
 import Navbar from './Navbar';
 
@@ -45,6 +46,19 @@ export default function AdminDashboard() {
     summary: '',
     status: 'draft',
   });
+
+  // Article states
+  const [articleError, setArticleError] = useState('');
+  const [articleSuccess, setArticleSuccess] = useState('');
+  const [showArticleForm, setShowArticleForm] = useState(false);
+  const [articles, setArticles] = useState([]);
+  const [loadingArticles, setLoadingArticles] = useState(false);
+  const [isEditingArticle, setIsEditingArticle] = useState(false);
+  const [editingArticleId, setEditingArticleId] = useState(null);
+  const [deletingArticle, setDeletingArticle] = useState(null);
+  const [articleFormData, setArticleFormData] = useState({ title: '', body: '', summary: '', status: 'draft' });
+  const [articleImageFile, setArticleImageFile] = useState(null);
+  const [articleImagePreview, setArticleImagePreview] = useState(null);
   
   const navigate = useNavigate();
 
@@ -73,6 +87,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     loadProducts();
     loadNews();
+    loadArticles();
   }, []);
 
   const loadProducts = async () => {
@@ -96,6 +111,18 @@ export default function AdminDashboard() {
       console.error('Error loading news:', err);
     } finally {
       setLoadingNews(false);
+    }
+  };
+
+  const loadArticles = async () => {
+    try {
+      setLoadingArticles(true);
+      const response = await fetchAdminArticlesList({ pageSize: 100 });
+      setArticles(response.data || []);
+    } catch (err) {
+      console.error('Error loading articles:', err);
+    } finally {
+      setLoadingArticles(false);
     }
   };
 
@@ -226,6 +253,91 @@ export default function AdminDashboard() {
       ...prev,
       [name]: value
     }));
+  };
+
+  // Article handlers
+  const handleArticleInputChange = (e) => {
+    const { name, value } = e.target;
+    setArticleFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleArticleImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setArticleImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => setArticleImagePreview(reader.result);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const resetArticleForm = () => {
+    setArticleFormData({ title: '', body: '', summary: '', status: 'draft' });
+    setIsEditingArticle(false);
+    setEditingArticleId(null);
+    setArticleError('');
+    setArticleSuccess('');
+    setArticleImageFile(null);
+    setArticleImagePreview(null);
+  };
+
+  const handleArticleSubmit = async (e) => {
+    e.preventDefault();
+    setArticleError('');
+    setArticleSuccess('');
+
+    try {
+      if (!articleFormData.title.trim() || !articleFormData.body.trim()) {
+        setArticleError('Judul dan isi artikel harus diisi');
+        return;
+      }
+
+      const payload = {
+        title: articleFormData.title.trim(),
+        body: articleFormData.body.trim(),
+        summary: articleFormData.summary.trim() || null,
+        status: articleFormData.status,
+        image: articleImageFile,
+      };
+
+      if (isEditingArticle && editingArticleId) {
+        await updateArticle(editingArticleId, payload);
+        setArticleSuccess('Artikel berhasil diperbarui!');
+      } else {
+        await createArticle(payload);
+        setArticleSuccess('Artikel berhasil ditambahkan!');
+      }
+
+      resetArticleForm();
+      await loadArticles();
+      setTimeout(() => { setShowArticleForm(false); setArticleSuccess(''); }, 2000);
+    } catch (err) {
+      setArticleError(err.message || 'Gagal menyimpan artikel');
+    }
+  };
+
+  const handleEditArticle = (article) => {
+    setArticleFormData({ title: article.title, body: article.body || '', summary: article.summary || '', status: article.status || 'draft' });
+    setIsEditingArticle(true);
+    setEditingArticleId(article.id);
+    setShowArticleForm(true);
+    setArticleError('');
+    setArticleSuccess('');
+    setArticleImagePreview(article.image_url ? `http://localhost:5000${article.image_url}` : null);
+    setArticleImageFile(null);
+  };
+
+  const handleDeleteArticle = async (id) => {
+    if (!window.confirm('Apakah Anda yakin ingin menghapus artikel ini?')) return;
+    try {
+      setDeletingArticle(id);
+      await softDeleteArticle(id);
+      setArticleSuccess('Artikel berhasil dihapus!');
+      await loadArticles();
+      setTimeout(() => setArticleSuccess(''), 2000);
+    } catch (err) {
+      setArticleError(err.message || 'Gagal menghapus artikel');
+    } finally { setDeletingArticle(null); }
   };
 
   const handleNewsSubmit = async (e) => {
@@ -769,6 +881,98 @@ export default function AdminDashboard() {
             <p className="text-sm text-gray-600 mt-6">
               Berita yang dipublikasikan akan langsung muncul di halaman <Link to="/news" className="text-[#3d4f45] hover:underline font-medium">Berita</Link>.
             </p>
+            {/* ARTICLES MANAGEMENT SECTION */}
+            <hr className="my-6" />
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-medium text-[#3d4f45] text-lg">Kelola Artikel</h2>
+                <button
+                  className="bg-[#3d4f45] text-white text-sm px-4 py-2 rounded hover:bg-[#4a5a50] transition"
+                  onClick={() => { if (showArticleForm) { resetArticleForm(); setShowArticleForm(false); } else { setShowArticleForm(true); } }}
+                >
+                  {showArticleForm ? 'Tutup Form' : 'Tambah Artikel'}
+                </button>
+              </div>
+
+              {showArticleForm && (
+                <div className="bg-[#f5f7f6] p-6 rounded-lg mb-6 border border-gray-200">
+                  <h3 className="text-lg font-semibold text-[#3d4f45] mb-4">{isEditingArticle ? 'Edit Artikel' : 'Form Tambah Artikel'}</h3>
+
+                  {articleError && (<div className="mb-4 p-3 bg-red-100 text-red-700 rounded">{articleError}</div>)}
+                  {articleSuccess && (<div className="mb-4 p-3 bg-green-100 text-green-700 rounded">{articleSuccess}</div>)}
+
+                  <form onSubmit={handleArticleSubmit}>
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-[#3d4f45] mb-1">Gambar Artikel</label>
+                      <div className="flex gap-4">
+                        <div className="flex-1">
+                          <input type="file" accept="image/*" onChange={handleArticleImageChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                          <p className="text-xs text-gray-500 mt-1">JPG, PNG, WebP atau GIF (max 5MB)</p>
+                        </div>
+                        {articleImagePreview && (<div className="w-24 h-24"><img src={articleImagePreview} alt="Preview" className="w-full h-full object-cover rounded-lg border"/></div>)}
+                      </div>
+                    </div>
+
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-[#3d4f45] mb-1">Judul Artikel *</label>
+                      <input type="text" name="title" value={articleFormData.title} onChange={handleArticleInputChange} required className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                    </div>
+
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-[#3d4f45] mb-1">Ringkasan</label>
+                      <textarea name="summary" value={articleFormData.summary} onChange={handleArticleInputChange} rows="2" className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                    </div>
+
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-[#3d4f45] mb-1">Isi Artikel *</label>
+                      <textarea name="body" value={articleFormData.body} onChange={handleArticleInputChange} rows="6" required className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <label className="block text-sm font-medium text-[#3d4f45] mb-1">Status</label>
+                        <select name="status" value={articleFormData.status} onChange={handleArticleInputChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                          <option value="draft">Draft (Belum Dipublikasikan)</option>
+                          <option value="published">Published (Sudah Dipublikasikan)</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3">
+                      <button type="submit" className="flex-1 bg-[#3d4f45] text-white font-medium py-2 rounded-lg">{isEditingArticle ? 'Perbarui Artikel' : 'Simpan Artikel'}</button>
+                      {isEditingArticle && (<button type="button" onClick={resetArticleForm} className="px-4 bg-gray-400 text-white py-2 rounded-lg">Batal</button>)}
+                    </div>
+                  </form>
+                </div>
+              )}
+
+              <div className="mt-6">
+                <h3 className="text-lg font-semibold text-[#3d4f45] mb-4">Daftar Artikel ({articles.length})</h3>
+                {loadingArticles && <p className="text-gray-600">Memuat artikel...</p>}
+                {!loadingArticles && articles.length === 0 && (<p className="text-gray-600">Belum ada artikel. Buat yang pertama!</p>)}
+                {!loadingArticles && articles.length > 0 && (
+                  <div className="space-y-3">
+                    {articles.map(a => (
+                      <div key={a.id} className="border border-gray-300 rounded p-4 bg-white hover:bg-gray-50">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h4 className="font-medium text-[#3d4f45] mb-1">{a.title}</h4>
+                            <p className="text-xs text-gray-500 mb-2">{a.created_at ? new Date(a.created_at).toLocaleDateString('id-ID') : 'Tanpa tanggal'} - <span className={a.status==='published' ? 'text-green-600 font-medium' : 'text-yellow-600 font-medium'}>{a.status==='published' ? 'Dipublikasikan' : 'Draft'}</span></p>
+                            <p className="text-sm text-gray-600 line-clamp-2">{a.summary || a.body?.substring(0,100)}</p>
+                          </div>
+                          <div className="flex gap-2 ml-4">
+                            <button onClick={() => handleEditArticle(a)} className="bg-blue-500 text-white px-3 py-1 rounded text-xs">Edit</button>
+                            <button onClick={() => handleDeleteArticle(a.id)} disabled={deletingArticle===a.id} className="bg-red-500 text-white px-3 py-1 rounded text-xs">{deletingArticle===a.id ? 'Menghapus...' : 'Hapus'}</button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <p className="text-sm text-gray-600 mt-6">Artikel yang dipublikasikan akan langsung muncul di halaman <Link to="/articles" className="text-[#3d4f45] hover:underline font-medium">Artikel</Link>.</p>
+            </div>
           </div>
         </div>
       </div>

@@ -1,5 +1,7 @@
 // src/api/newsApi.js
 
+import { authHeaders } from '../../utils/auth';
+
 const API_BASE = 'http://localhost:5000/api/news';
 
 // helper kecil bikin query string
@@ -44,7 +46,8 @@ export async function fetchAdminNewsList({
   includeDeleted = false, // true kalau mau lihat yang sudah soft delete juga
 } = {}) {
   const res = await fetch(
-    `${API_BASE}/admin${buildQuery({ page, pageSize, q, sort, status, includeDeleted })}`
+    `${API_BASE}/admin${buildQuery({ page, pageSize, q, sort, status, includeDeleted })}`,
+    { headers: { ...authHeaders(), Accept: 'application/json' } }
   );
   if (!res.ok) throw new Error('Failed to fetch admin news list');
   return res.json(); // { meta, data }
@@ -54,7 +57,7 @@ export async function fetchAdminNewsList({
 export async function createNews(payload) {
   const res = await fetch(API_BASE, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
     body: JSON.stringify(payload),
   });
   if (!res.ok) {
@@ -68,7 +71,7 @@ export async function createNews(payload) {
 export async function updateNews(id, payload) {
   const res = await fetch(`${API_BASE}/${id}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...authHeaders() },
     body: JSON.stringify(payload),
   });
   if (!res.ok) {
@@ -80,7 +83,7 @@ export async function updateNews(id, payload) {
 
 // soft delete
 export async function softDeleteNews(id) {
-  const res = await fetch(`${API_BASE}/${id}`, { method: 'DELETE' });
+  const res = await fetch(`${API_BASE}/${id}`, { method: 'DELETE', headers: { ...authHeaders() } });
   if (!res.ok) {
     const msg = await res.text().catch(() => '');
     throw new Error(msg || 'Failed to delete news');
@@ -90,7 +93,7 @@ export async function softDeleteNews(id) {
 
 // restore (batalkan soft delete)
 export async function restoreNews(id) {
-  const res = await fetch(`${API_BASE}/${id}/restore`, { method: 'PATCH' });
+  const res = await fetch(`${API_BASE}/${id}/restore`, { method: 'PATCH', headers: { ...authHeaders() } });
   if (!res.ok) {
     const msg = await res.text().catch(() => '');
     throw new Error(msg || 'Failed to restore news');

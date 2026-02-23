@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
+import { Link } from 'react-router-dom';
 import Navbar from "./Navbar";
 import Footer from "./Footer";
-import { fetchAdminNewsList } from "../src/api/newsApi";
+import { fetchNewsList } from "../src/api/newsApi";
+import { fetchArticlesList } from "../src/api/articlesApi";
 
 export default function News({ isAdmin, AdminSection }) {
   const [newsItems, setNewsItems] = useState([]);
@@ -13,8 +15,24 @@ export default function News({ isAdmin, AdminSection }) {
       try {
         setLoading(true);
         setError('');
-        const response = await fetchAdminNewsList({ pageSize: 50, status: 'published' });
-        setNewsItems(response.data || []);
+        const [newsRes, articlesRes] = await Promise.all([
+          fetchNewsList({ pageSize: 50 }),
+          fetchArticlesList({ pageSize: 50 }),
+        ]);
+
+        const newsData = (newsRes.data || []).map(n => ({ ...n, __source: 'news' }));
+        const articlesData = (articlesRes.data || []).map(a => ({ ...a, __source: 'article' }));
+
+        const combined = [...newsData, ...articlesData].map(item => ({
+          ...item,
+          _published_at: item.published_at || item.created_at || null,
+        })).sort((a, b) => {
+          const da = a._published_at ? new Date(a._published_at).getTime() : 0;
+          const db = b._published_at ? new Date(b._published_at).getTime() : 0;
+          return db - da;
+        });
+
+        setNewsItems(combined);
       } catch (err) {
         console.error('Error loading news:', err);
         setError('Gagal memuat berita');
@@ -49,7 +67,7 @@ export default function News({ isAdmin, AdminSection }) {
       <section className="py-20 px-6 bg-white">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-3xl text-center mb-12 text-[#3d4f45] font-light">
-            Berita Terkini
+            Berita dan Artikel Terkini
           </h2>
 
           {/* Loading State */}
@@ -76,30 +94,37 @@ export default function News({ isAdmin, AdminSection }) {
           {/* News Grid */}
           {!loading && newsItems.length > 0 && (
             <div className="grid md:grid-cols-3 gap-8">
-              {newsItems.map((news) => (
+              {newsItems.map((item) => (
                 <div
-                  key={news.id}
+                  key={`${item.__source}-${item.id}`}
                   className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition border border-gray-100"
                 >
-                  <div className="bg-[#b8c5ba] h-48 relative">
-                    <div className="absolute top-8 left-8 w-12 h-12 bg-[#a8b5aa] rounded-full"></div>
-                    <div className="absolute bottom-0 w-full h-1/2 bg-gradient-to-t from-[#a8b5aa] to-transparent"></div>
-                  </div>
+                  {item.image_url ? (
+                    <img src={item.image_url} alt={item.title} className="w-full h-48 object-cover" />
+                  ) : (
+                    <div className="bg-[#b8c5ba] h-48 relative">
+                      <div className="absolute top-8 left-8 w-12 h-12 bg-[#a8b5aa] rounded-full"></div>
+                      <div className="absolute bottom-0 w-full h-1/2 bg-gradient-to-t from-[#a8b5aa] to-transparent"></div>
+                    </div>
+                  )}
                   <div className="p-6">
                     <p className="text-xs text-gray-500 mb-2">
-                      {news.created_at ? new Date(news.created_at).toLocaleDateString('id-ID', {
+                      {item._published_at ? new Date(item._published_at).toLocaleDateString('id-ID', {
                         year: 'numeric',
                         month: 'long',
                         day: 'numeric'
                       }) : 'Tanpa tanggal'}
                     </p>
-                    <h3 className="text-xl mb-3 text-[#3d4f45]">{news.title}</h3>
+                    <h3 className="text-xl mb-3 text-[#3d4f45]">{item.title}</h3>
                     <p className="text-gray-600 text-sm leading-relaxed mb-4">
-                      {news.summary || news.body?.substring(0, 150) || 'Tidak ada ringkasan'}
+                      {item.summary || item.body?.substring(0, 150) || 'Tidak ada ringkasan'}
                     </p>
-                    <button className="text-sm text-[#3d4f45] hover:underline">
+                    <Link
+                      to={item.__source === 'news' ? `/news/${encodeURIComponent(item.slug)}` : `/articles/${encodeURIComponent(item.slug)}`}
+                      className="text-sm text-[#3d4f45] hover:underline"
+                    >
                       Baca Selengkapnya →
-                    </button>
+                    </Link>
                   </div>
                 </div>
               ))}

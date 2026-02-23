@@ -42,6 +42,11 @@ const newsRoutes = require('./routes/news.routes');
 app.use('/api/news', newsRoutes);
 /* ============================================ */
 
+/* ======== [ADD] ARTICLES ROUTES ======== */
+const articlesRoutes = require('./routes/articles.routes');
+app.use('/api/articles', articlesRoutes);
+/* ====================================== */
+
 /* ======== [ADD] ADMIN ROUTES (BARU) ======== */
 const adminRoutes = require('./routes/admin.routes');
 app.use('/api/admin', adminRoutes);
