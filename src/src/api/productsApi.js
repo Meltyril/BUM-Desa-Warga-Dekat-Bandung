@@ -1,5 +1,7 @@
 // src/api/productsApi.js
 
+import { authHeaders } from '../../utils/auth';
+
 const API_BASE = 'http://localhost:5000/api/products';
 
 // helper untuk build query string
@@ -57,6 +59,7 @@ export async function createProduct({ name, price, description, stock, image }) 
       body: formData,
       headers: {
         'Accept': 'application/json',
+        ...authHeaders(),
       }
     });
     
@@ -93,6 +96,7 @@ export async function updateProduct(id, { name, price, description, stock, image
   const res = await fetch(`${API_BASE}/${id}`, {
     method: 'PUT',
     body: formData,
+    headers: authHeaders(),
   });
   
   if (!res.ok) {
@@ -106,6 +110,7 @@ export async function updateProduct(id, { name, price, description, stock, image
 export async function deleteProduct(id) {
   const res = await fetch(`${API_BASE}/${id}`, {
     method: 'DELETE',
+    headers: authHeaders(),
   });
   
   if (!res.ok) {

@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Articles = require('../models/articles.model');
 const auth = require('../middleware/auth');
+const authorize = require('../middleware/authorize');
 const upload = require('../middleware/upload');
 const fs = require('fs');
 
@@ -60,7 +61,7 @@ router.get('/', async (req, res) => {
 });
 
 // ADMIN list
-router.get('/admin', auth, async (req, res) => {
+router.get('/admin', auth, authorize('content_manager', 'admin'), async (req, res) => {
   try {
     const page = parseInt(req.query.page || '1', 10);
     const pageSize = parseInt(req.query.pageSize || '10', 10);
@@ -94,7 +95,7 @@ router.get('/:slug', async (req, res) => {
 });
 
 // CREATE (admin) - support image upload (field 'image')
-router.post('/', auth, upload.single('image'), async (req, res) => {
+router.post('/', auth, authorize('content_manager', 'admin'), upload.single('image'), async (req, res) => {
   try {
     const body = { ...req.body };
     if (req.file) {
@@ -145,7 +146,7 @@ router.post('/', auth, upload.single('image'), async (req, res) => {
 });
 
 // UPDATE (admin)
-router.put('/:id', auth, upload.single('image'), async (req, res) => {
+router.put('/:id', auth, authorize('content_manager', 'admin'), upload.single('image'), async (req, res) => {
   try {
     const id = Number(req.params.id);
     if (!Number.isFinite(id)) return res.status(400).json({ error: 'invalid id' });
@@ -190,7 +191,7 @@ router.put('/:id', auth, upload.single('image'), async (req, res) => {
 });
 
 // RESTORE
-router.patch('/:id/restore', auth, async (req, res) => {
+router.patch('/:id/restore', auth, authorize('content_manager', 'admin'), async (req, res) => {
   try {
     const id = Number(req.params.id);
     if (!Number.isFinite(id)) return res.status(400).json({ error: 'invalid id' });
@@ -204,7 +205,7 @@ router.patch('/:id/restore', auth, async (req, res) => {
 });
 
 // DELETE (soft)
-router.delete('/:id', auth, async (req, res) => {
+router.delete('/:id', auth, authorize('content_manager', 'admin'), async (req, res) => {
   try {
     const id = Number(req.params.id);
     if (!Number.isFinite(id)) return res.status(400).json({ error: 'invalid id' });

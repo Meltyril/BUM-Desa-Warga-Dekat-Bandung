@@ -2,8 +2,9 @@ const express = require('express');
 const router = express.Router();
 const News = require('../models/news.model');
 
-// === Import middleware auth ===
+// === Import middleware auth & authorize ===
 const auth = require('../middleware/auth');
+const authorize = require('../middleware/authorize');
 
 // util kecil buat slug
 function slugify(text = '') {
@@ -110,8 +111,8 @@ router.get('/', async (req, res) => {
   }
 });
 
-/* ===== LIST ADMIN (HARUS LOGIN ADMIN) ===== */
-router.get('/admin', auth, async (req, res) => {
+/* ===== LIST ADMIN (HARUS LOGIN ADMIN DENGAN ROLE content_manager) ===== */
+router.get('/admin', auth, authorize('content_manager', 'admin'), async (req, res) => {
   try {
     const page = parseInt(req.query.page || '1', 10);
     const pageSize = parseInt(req.query.pageSize || '10', 10);
@@ -155,8 +156,8 @@ router.get('/:slug', async (req, res) => {
   }
 });
 
-// CREATE (HARUS LOGIN ADMIN)
-router.post('/', auth, async (req, res) => {
+// CREATE (HARUS LOGIN ADMIN DENGAN ROLE content_manager)
+router.post('/', auth, authorize('content_manager', 'admin'), async (req, res) => {
   try {
     const v = validateNewsPayload(req.body || {}, { isUpdate: false });
     if (!v.ok) return res.status(400).json({ error: v.errors.join(', ') });
@@ -194,8 +195,8 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
-// UPDATE (HARUS LOGIN ADMIN)
-router.put('/:id', auth, async (req, res) => {
+// UPDATE (HARUS LOGIN ADMIN DENGAN ROLE content_manager)
+router.put('/:id', auth, authorize('content_manager', 'admin'), async (req, res) => {
   try {
     const id = Number(req.params.id);
     if (!Number.isFinite(id)) return res.status(400).json({ error: 'invalid id' });
@@ -218,8 +219,8 @@ router.put('/:id', auth, async (req, res) => {
   }
 });
 
-// RESTORE (HARUS LOGIN ADMIN)
-router.patch('/:id/restore', auth, async (req, res) => {
+// RESTORE (HARUS LOGIN ADMIN DENGAN ROLE content_manager)
+router.patch('/:id/restore', auth, authorize('content_manager', 'admin'), async (req, res) => {
   try {
     const id = Number(req.params.id);
     if (!Number.isFinite(id)) return res.status(400).json({ error: 'invalid id' });
@@ -236,8 +237,8 @@ router.patch('/:id/restore', auth, async (req, res) => {
   }
 });
 
-// DELETE (HARUS LOGIN ADMIN)
-router.delete('/:id', auth, async (req, res) => {
+// DELETE (HARUS LOGIN ADMIN DENGAN ROLE content_manager)
+router.delete('/:id', auth, authorize('content_manager', 'admin'), async (req, res) => {
   try {
     const id = Number(req.params.id);
     if (!Number.isFinite(id)) return res.status(400).json({ error: 'invalid id' });

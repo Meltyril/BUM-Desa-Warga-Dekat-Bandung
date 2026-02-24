@@ -45,11 +45,12 @@ router.post('/login', async (req, res) => {
       return res.status(500).json({ message: 'JWT_SECRET belum di-set di server' });
     }
 
-    // BUAT TOKEN JWT
+    // BUAT TOKEN JWT (dengan ROLE)
     const token = jwt.sign(
       {
         id: admin.id,
-        email: admin.email
+        email: admin.email,
+        role: admin.role || 'admin'
       },
       process.env.JWT_SECRET,
       {
@@ -63,7 +64,8 @@ router.post('/login', async (req, res) => {
       admin: {
         id: admin.id,
         email: admin.email,
-        username: admin.username
+        username: admin.username,
+        role: admin.role || 'admin'
       }
     });
   } catch (err) {

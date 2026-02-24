@@ -4,13 +4,15 @@ import { fetchAdminProfile } from '../src/api/adminApi';
 import { createProduct, fetchProductsList, updateProduct, deleteProduct } from '../src/api/productsApi';
 import { createNews, fetchAdminNewsList, updateNews, softDeleteNews } from '../src/api/newsApi';
 import { createArticle, fetchAdminArticlesList, updateArticle, softDeleteArticle } from '../src/api/articlesApi';
-import { getToken, removeToken } from '../utils/auth';
+import { fetchUsersList, createUser, updateUser, deleteUser, resetUserPassword } from '../src/api/usersApi';
+import { getToken, removeToken, getAdminRole, setAdminInfo, logout } from '../utils/auth';
 import Navbar from './Navbar';
 
 export default function AdminDashboard() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [userRole, setUserRole] = useState('user');
   
   // Product states
   const [productError, setProductError] = useState('');
@@ -59,7 +61,23 @@ export default function AdminDashboard() {
   const [articleFormData, setArticleFormData] = useState({ title: '', body: '', summary: '', status: 'draft' });
   const [articleImageFile, setArticleImageFile] = useState(null);
   const [articleImagePreview, setArticleImagePreview] = useState(null);
-  
+
+  // User management states (admin only)
+  const [users, setUsers] = useState([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [userError, setUserError] = useState('');
+  const [userSuccess, setUserSuccess] = useState('');
+  const [showUserForm, setShowUserForm] = useState(false);
+  const [isEditingUser, setIsEditingUser] = useState(false);
+  const [editingUserId, setEditingUserId] = useState(null);
+  const [deletingUser, setDeletingUser] = useState(null);
+  const [userFormData, setUserFormData] = useState({
+    email: '',
+    username: '',
+    password: '',
+    role: 'admin',
+  });
+
   const navigate = useNavigate();
 
   // Load admin profile
@@ -73,6 +91,7 @@ export default function AdminDashboard() {
       try {
         const res = await fetchAdminProfile(token);
         setProfile(res.admin || res);
+        setUserRole(res.admin?.role || getAdminRole());
       } catch (err) {
         removeToken();
         navigate('/admin/login');
@@ -88,7 +107,10 @@ export default function AdminDashboard() {
     loadProducts();
     loadNews();
     loadArticles();
-  }, []);
+    if (userRole === 'admin') {
+      loadUsers();
+    }
+  }, [userRole]);
 
   const loadProducts = async () => {
     try {
@@ -123,6 +145,19 @@ export default function AdminDashboard() {
       console.error('Error loading articles:', err);
     } finally {
       setLoadingArticles(false);
+    }
+  };
+
+  const loadUsers = async () => {
+    try {
+      setLoadingUsers(true);
+      const usersList = await fetchUsersList();
+      setUsers(usersList || []);
+    } catch (err) {
+      console.error('Error loading users:', err);
+      setUserError('Gagal memuat pengguna');
+    } finally {
+      setLoadingUsers(false);
     }
   };
 
@@ -235,6 +270,98 @@ export default function AdminDashboard() {
       setProductError(err.message || 'Gagal menghapus produk');
     } finally {
       setDeleting(null);
+    }
+  };
+
+  // User management handlers
+  const resetUserForm = () => {
+    setUserFormData({ email: '', username: '', password: '', role: 'admin' });
+    setIsEditingUser(false);
+    setEditingUserId(null);
+    setUserError('');
+    setUserSuccess('');
+  };
+
+  const handleUserFormInputChange = (e) => {
+    const { name, value } = e.target;
+    setUserFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleUserSubmit = async (e) => {
+    e.preventDefault();
+    setUserError('');
+    setUserSuccess('');
+
+    try {
+      if (!userFormData.email.trim() || !userFormData.username.trim()) {
+        setUserError('Email dan username harus diisi');
+        return;
+      }
+
+      if (!isEditingUser && !userFormData.password.trim()) {
+        setUserError('Password harus diisi untuk user baru');
+        return;
+      }
+
+      if (isEditingUser && editingUserId) {
+        // Update user (without password)
+        await updateUser(editingUserId, {
+          email: userFormData.email.trim(),
+          username: userFormData.username.trim(),
+          role: userFormData.role,
+        });
+        setUserSuccess('Pengguna berhasil diperbarui!');
+      } else {
+        // Create new user
+        await createUser({
+          email: userFormData.email.trim(),
+          username: userFormData.username.trim(),
+          password: userFormData.password.trim(),
+          role: userFormData.role,
+        });
+        setUserSuccess('Pengguna berhasil dibuat!');
+      }
+
+      resetUserForm();
+      await loadUsers();
+      setTimeout(() => {
+        setShowUserForm(false);
+        setUserSuccess('');
+      }, 2000);
+    } catch (err) {
+      setUserError(err.message || 'Gagal menyimpan pengguna');
+    }
+  };
+
+  const handleEditUser = (user) => {
+    setUserFormData({
+      email: user.email,
+      username: user.username,
+      password: '',
+      role: user.role || 'admin',
+    });
+    setIsEditingUser(true);
+    setEditingUserId(user.id);
+    setShowUserForm(true);
+    setUserError('');
+    setUserSuccess('');
+  };
+
+  const handleDeleteUser = async (userId) => {
+    if (!window.confirm('Apakah Anda yakin ingin menghapus pengguna ini?')) {
+      return;
+    }
+
+    try {
+      setDeletingUser(userId);
+      await deleteUser(userId);
+      setUserSuccess('Pengguna berhasil dihapus!');
+      await loadUsers();
+      setTimeout(() => setUserSuccess(''), 2000);
+    } catch (err) {
+      setUserError(err.message || 'Gagal menghapus pengguna');
+    } finally {
+      setDeletingUser(null);
     }
   };
 
@@ -422,7 +549,7 @@ export default function AdminDashboard() {
             <button
               className="bg-[#3d4f45] text-white text-sm px-3 py-1 rounded hover:bg-[#4a5a50] transition"
               onClick={() => {
-                removeToken();
+                logout();
                 navigate('/admin/login');
               }}
             >
@@ -435,6 +562,7 @@ export default function AdminDashboard() {
               <p className="mb-1">ID: <strong>{profile.id}</strong></p>
               <p className="mb-1">Email: <strong>{profile.email}</strong></p>
               <p className="mb-1">Username: <strong>{profile.username}</strong></p>
+              <p className="mb-1">Role: <strong className="capitalize px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm">{userRole}</strong></p>
             </div>
           ) : (
             <div>Tidak ada data profil</div>
@@ -442,19 +570,196 @@ export default function AdminDashboard() {
 
           <hr className="my-6" />
 
+          {/* USER MANAGEMENT SECTION - ONLY FOR admin ROLE */}
+          {userRole === 'admin' && (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-medium text-[#3d4f45] text-lg">Kelola Pengguna</h2>
+              <button
+                className="bg-[#3d4f45] text-white text-sm px-4 py-2 rounded hover:bg-[#4a5a50] transition"
+                onClick={() => {
+                  if (showUserForm) {
+                    resetUserForm();
+                    setShowUserForm(false);
+                  } else {
+                    setShowUserForm(true);
+                  }
+                }}
+              >
+                {showUserForm ? 'Tutup Form' : 'Tambah Pengguna'}
+              </button>
+            </div>
+
+            {/* User Form */}
+            {showUserForm && (
+              <div className="bg-[#f5f7f6] p-6 rounded-lg mb-6 border border-gray-200">
+                <h3 className="text-lg font-semibold text-[#3d4f45] mb-4">
+                  {isEditingUser ? 'Edit Pengguna' : 'Form Tambah Pengguna'}
+                </h3>
+
+                {userError && (
+                  <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
+                    {userError}
+                  </div>
+                )}
+
+                {userSuccess && (
+                  <div className="mb-4 p-3 bg-green-100 text-green-700 rounded">
+                    {userSuccess}
+                  </div>
+                )}
+
+                <form onSubmit={handleUserSubmit}>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-[#3d4f45] mb-1">
+                      Email *
+                    </label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={userFormData.email}
+                      onChange={handleUserFormInputChange}
+                      placeholder="user@example.com"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3d4f45]"
+                      required
+                    />
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-[#3d4f45] mb-1">
+                      Username *
+                    </label>
+                    <input
+                      type="text"
+                      name="username"
+                      value={userFormData.username}
+                      onChange={handleUserFormInputChange}
+                      placeholder="Username"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3d4f45]"
+                      required
+                    />
+                  </div>
+
+                  {!isEditingUser && (
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-[#3d4f45] mb-1">
+                        Password * {isEditingUser && '(Kosongkan jika tidak ingin mengubah)'}
+                      </label>
+                      <input
+                        type="password"
+                        name="password"
+                        value={userFormData.password}
+                        onChange={handleUserFormInputChange}
+                        placeholder="Masukkan password"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3d4f45]"
+                        required={!isEditingUser}
+                      />
+                    </div>
+                  )}
+
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-[#3d4f45] mb-1">
+                      Role *
+                    </label>
+                    <select
+                      name="role"
+                      value={userFormData.role}
+                      onChange={handleUserFormInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3d4f45]"
+                      required
+                    >
+                      <option value="admin">Admin (Full Access)</option>
+                      <option value="product_manager">Product Manager (Kelola Produk)</option>
+                      <option value="content_manager">Content Manager (Kelola Berita & Artikel)</option>
+                    </select>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      type="submit"
+                      className="flex-1 bg-[#3d4f45] text-white font-medium py-2 rounded-lg hover:bg-[#4a5a50] transition"
+                    >
+                      {isEditingUser ? 'Perbarui Pengguna' : 'Buat Pengguna'}
+                    </button>
+                    {isEditingUser && (
+                      <button
+                        type="button"
+                        onClick={resetUserForm}
+                        className="px-4 bg-gray-400 text-white font-medium py-2 rounded-lg hover:bg-gray-500 transition"
+                      >
+                        Batal
+                      </button>
+                    )}
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {/* Users List */}
+            <div className="mt-6">
+              <h3 className="text-lg font-semibold text-[#3d4f45] mb-4">Daftar Pengguna ({users.length})</h3>
+
+              {loadingUsers && <p className="text-gray-600">Memuat pengguna...</p>}
+
+              {!loadingUsers && users.length === 0 && (
+                <p className="text-gray-600">Belum ada pengguna.</p>
+              )}
+
+              {!loadingUsers && users.length > 0 && (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm border-collapse">
+                    <thead>
+                      <tr className="bg-gray-100 border border-gray-300">
+                        <th className="border border-gray-300 px-4 py-2 text-left">ID</th>
+                        <th className="border border-gray-300 px-4 py-2 text-left">Email</th>
+                        <th className="border border-gray-300 px-4 py-2 text-left">Username</th>
+                        <th className="border border-gray-300 px-4 py-2 text-center">Role</th>
+                        <th className="border border-gray-300 px-4 py-2 text-center">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {users.map((user) => (
+                        <tr key={user.id} className="border border-gray-300 hover:bg-gray-50">
+                          <td className="border border-gray-300 px-4 py-2">{user.id}</td>
+                          <td className="border border-gray-300 px-4 py-2">{user.email}</td>
+                          <td className="border border-gray-300 px-4 py-2">{user.username}</td>
+                          <td className="border border-gray-300 px-4 py-2 text-center">
+                            <span className="capitalize px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
+                              {user.role}
+                            </span>
+                          </td>
+                          <td className="border border-gray-300 px-4 py-2 text-center">
+                            <div className="flex gap-2 justify-center">
+                              <button
+                                onClick={() => handleEditUser(user)}
+                                className="bg-blue-500 text-white px-3 py-1 rounded text-xs hover:bg-blue-600 transition"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleDeleteUser(user.id)}
+                                disabled={deletingUser === user.id}
+                                className="bg-red-500 text-white px-3 py-1 rounded text-xs hover:bg-red-600 transition disabled:opacity-50"
+                              >
+                                {deletingUser === user.id ? 'Menghapus...' : 'Hapus'}
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+          )}
+
+          <hr className="my-6" />
+
           <div>
             <h2 className="font-medium mb-2 text-[#3d4f45]">Quick Links</h2>
             <div className="grid gap-3 sm:grid-cols-2">
-              <Link to="/admin/users" className="block p-4 bg-white border rounded-lg shadow-sm hover:shadow-lg transition">
-                <div className="flex items-center">
-                  <div className="w-12 h-12 bg-[#3d4f45] text-white rounded flex items-center justify-center mr-4">U</div>
-                  <div>
-                    <div className="text-sm text-gray-500">Pengguna</div>
-                    <div className="font-medium text-[#3d4f45]">Kelola Pengguna</div>
-                  </div>
-                </div>
-              </Link>
-
               <Link to="/admin/posts" className="block p-4 bg-white border rounded-lg shadow-sm hover:shadow-lg transition">
                 <div className="flex items-center">
                   <div className="w-12 h-12 bg-[#3d4f45] text-white rounded flex items-center justify-center mr-4">P</div>
@@ -469,7 +774,8 @@ export default function AdminDashboard() {
 
           <hr className="my-6" />
 
-          {/* PRODUCT MANAGEMENT SECTION */}
+          {/* PRODUCT MANAGEMENT SECTION - ONLY FOR product_manager AND admin ROLES */}
+          {(userRole === 'product_manager' || userRole === 'admin') && (
           <div>
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-medium text-[#3d4f45] text-lg">Kelola Produk</h2>
@@ -700,10 +1006,12 @@ export default function AdminDashboard() {
               Produk yang ditambahkan/diperbarui akan langsung muncul di halaman <Link to="/products" className="text-[#3d4f45] hover:underline font-medium">Produk</Link>.
             </p>
           </div>
+          )}
 
           <hr className="my-6" />
 
-          {/* NEWS MANAGEMENT SECTION */}
+          {/* NEWS MANAGEMENT SECTION - ONLY FOR content_manager AND admin ROLES */}
+          {(userRole === 'content_manager' || userRole === 'admin') && (
           <div>
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-medium text-[#3d4f45] text-lg">Kelola Berita</h2>
@@ -881,9 +1189,12 @@ export default function AdminDashboard() {
             <p className="text-sm text-gray-600 mt-6">
               Berita yang dipublikasikan akan langsung muncul di halaman <Link to="/news" className="text-[#3d4f45] hover:underline font-medium">Berita</Link>.
             </p>
-            {/* ARTICLES MANAGEMENT SECTION */}
-            <hr className="my-6" />
-            <div>
+          </div>
+          )}
+
+          {/* ARTICLES MANAGEMENT SECTION - ONLY FOR content_manager AND admin ROLES */}
+          {(userRole === 'content_manager' || userRole === 'admin') && (
+          <div>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-medium text-[#3d4f45] text-lg">Kelola Artikel</h2>
                 <button
@@ -973,7 +1284,26 @@ export default function AdminDashboard() {
 
               <p className="text-sm text-gray-600 mt-6">Artikel yang dipublikasikan akan langsung muncul di halaman <Link to="/articles" className="text-[#3d4f45] hover:underline font-medium">Artikel</Link>.</p>
             </div>
-          </div>
+          )}
+
+          {/* MESSAGE FOR LIMITED ACCESS */}
+          {userRole !== 'admin' && userRole !== 'product_manager' && userRole !== 'content_manager' && (
+            <div className="mt-10 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-yellow-800"><strong>Akses Terbatas:</strong> Role Anda ({userRole}) tidak memiliki akses ke fitur kelola produk atau konten. Hubungi administrator untuk mendapatkan akses.</p>
+            </div>
+          )}
+
+          {userRole === 'product_manager' && (userRole !== 'admin') && (
+            <div className="mt-10 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-blue-800"><strong>Informasi:</strong> Anda memiliki akses sebagai Product Manager. Anda hanya dapat mengelola produk.</p>
+            </div>
+          )}
+
+          {userRole === 'content_manager' && (userRole !== 'admin') && (
+            <div className="mt-10 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-blue-800"><strong>Informasi:</strong> Anda memiliki akses sebagai Content Manager. Anda hanya dapat mengelola berita dan artikel.</p>
+            </div>
+          )}
         </div>
       </div>
     </>

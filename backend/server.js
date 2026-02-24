@@ -6,6 +6,8 @@ const path = require('path'); // [NEW]
 const fs = require('fs');
 const { pool } = require('./db'); // ⬅️ pakai MySQL pool
 const upload = require('./middleware/upload'); // [NEW] untuk upload gambar
+const auth = require('./middleware/auth'); // [NEW] untuk authentication
+const authorize = require('./middleware/authorize'); // [NEW] untuk role-based access
 
 // ===== Env sanity check =====
 // Beri peringatan awal jika variabel lingkungan penting tidak di-set
@@ -52,12 +54,17 @@ const adminRoutes = require('./routes/admin.routes');
 app.use('/api/admin', adminRoutes);
 /* ========================================== */
 
+/* ======== [ADD] USERS ROUTES (BARU) ======== */
+const usersRoutes = require('./routes/users.routes');
+app.use('/api/users', usersRoutes);
+/* ============================================ */
+
 // =======================
 // PRODUCTS (MySQL)
 // =======================
 
-// CREATE ( di simpan ke MySQL dengan optional image)
-app.post('/api/products', upload.single('image'), async (req, res, next) => {
+// CREATE ( di simpan ke MySQL dengan optional image) - REQUIRES product_manager ROLE
+app.post('/api/products', auth, authorize('product_manager', 'admin'), upload.single('image'), async (req, res, next) => {
   try {
     console.log('[products:create] Body:', req.body);
     console.log('[products:create] File:', req.file);
@@ -168,8 +175,8 @@ app.get('/api/products/:id', async (req, res) => {
   }
 });
 
-// UPDATE (PUT /api/products/:id)
-app.put('/api/products/:id', upload.single('image'), async (req, res, next) => {
+// UPDATE (PUT /api/products/:id) - REQUIRES product_manager ROLE
+app.put('/api/products/:id', auth, authorize('product_manager', 'admin'), upload.single('image'), async (req, res, next) => {
   try {
     const id = Number(req.params.id);
     const { name, price, description, stock } = req.body;
@@ -241,8 +248,8 @@ app.put('/api/products/:id', upload.single('image'), async (req, res, next) => {
   return res.status(400).json({ error: err.message || 'Gagal upload gambar' });
 });
 
-// DELETE (DELETE /api/products/:id)
-app.delete('/api/products/:id', async (req, res) => {
+// DELETE (DELETE /api/products/:id) - REQUIRES product_manager ROLE
+app.delete('/api/products/:id', auth, authorize('product_manager', 'admin'), async (req, res) => {
   try {
     const id = Number(req.params.id);
     

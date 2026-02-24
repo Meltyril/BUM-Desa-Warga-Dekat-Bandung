@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { loginAdmin } from '../src/api/adminApi';
-import { setToken } from '../utils/auth';
+import { setToken, setAdminInfo } from '../utils/auth';
 import Navbar from './Navbar';
 
 export default function AdminLogin() {
@@ -18,6 +18,7 @@ export default function AdminLogin() {
     try {
       const res = await loginAdmin({ email, password });
       setToken(res.token);
+      setAdminInfo(res.admin);
       navigate('/admin');
     } catch (err) {
       setError(err.message || 'Login gagal');
