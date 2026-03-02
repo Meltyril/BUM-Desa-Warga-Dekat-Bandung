@@ -85,6 +85,13 @@ export default function News({ isAdmin, AdminSection }) {
                     <h3 className="text-xl mb-3 text-[#3d4f45]">
                       {news.title}
                     </h3>
+
+                    {/* Summary */}
+                    {news.summary && (
+                    <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+                      {news.summary}
+                    </p>
+                    )}
                   
                     <Link to={`/news/${news.id}`}
                     className="text-sm text-[#3d4f45] hover:underline"

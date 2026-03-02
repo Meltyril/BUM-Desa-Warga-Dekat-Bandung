@@ -102,16 +102,11 @@ export default function NewsDetail() {
             {news.title}
           </h1>
 
-          {/* Summary */}
-          {news.summary && (
-            <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-              {news.summary}
-            </p>
-          )}
-
           {/* Body */}
           <div className="text-gray-600 text-sm leading-relaxed whitespace-pre-line space-y-4">
-            {news.body}
+             <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+                {news.body}  
+             </p>
           </div>
 
         </div>
