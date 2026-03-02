@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { fetchAdminProfile } from '../src/api/adminApi';
-import { createProduct, fetchProductsList, updateProduct, deleteProduct } from '../src/api/productsApi';
-import { createNews, fetchAdminNewsList, updateNews, softDeleteNews } from '../src/api/newsApi';
+import { fetchAdminProfile } from '../api/adminApi';
+import { createProduct, fetchProductsList, updateProduct, deleteProduct } from '../api/productsApi';
+import { createNews, fetchAdminNewsList, updateNews, softDeleteNews } from '../api/newsApi';
 import { getToken, removeToken } from '../utils/auth';
 import Navbar from './Navbar';
 
@@ -31,6 +31,8 @@ export default function AdminDashboard() {
   const [imagePreview, setImagePreview] = useState(null);
 
   // News states
+  const [newsImageFile, setNewsImageFile] = useState(null);
+  const [newsImagePreview, setNewsImagePreview] = useState(null);
   const [newsError, setNewsError] = useState('');
   const [newsSuccess, setNewsSuccess] = useState('');
   const [showNewsForm, setShowNewsForm] = useState(false);

@@ -1,5 +1,6 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+
 import Homepage from "./components/Homepage";
 import AboutUs from "./components/AboutUs";
 import Products from "./components/Products";
@@ -8,6 +9,8 @@ import Services from "./components/Services";
 import News from "./components/News";
 import NewsDetail from "./components/NewsDetail";
 import Contact from "./components/Contact";
+import AdminDashboard from "./components/AdminDashboard";
+import AdminLogin from "./components/AdminLogin";
 
 function AdminSection() {
   return (
@@ -23,18 +26,20 @@ function AdminSection() {
         >
           Admin Panel (Quick Actions)
         </h2>
-        <a
-          href="/admin"
-          className="rounded-xl border border-[#3d4f45] px-3 py-1 text-sm text-[#3d4f45] hover:bg-[#3d4f45] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3d4f45] transition"
+
+        {/* ✅ Pakai Link, bukan <a> */}
+        <Link
+          to="/admin"
+          className="rounded-xl border border-[#3d4f45] px-3 py-1 text-sm text-[#3d4f45] hover:bg-[#3d4f45] hover:text-white transition"
         >
           Buka Halaman Admin →
-        </a>
+        </Link>
       </div>
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <a
-          href="/admin/users"
-          className="rounded-2xl border border-gray-200 p-4 hover:shadow-md hover:border-[#3d4f45] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3d4f45] transition"
-          aria-label="Kelola pengguna"
+        <Link
+          to="/admin/users"
+          className="rounded-2xl border border-gray-200 p-4 hover:shadow-md hover:border-[#3d4f45] transition"
         >
           <h3 className="mb-1 text-base font-medium text-[#3d4f45]">
             Kelola Pengguna
@@ -42,11 +47,11 @@ function AdminSection() {
           <p className="text-sm text-gray-600">
             Tambah, edit, nonaktifkan user.
           </p>
-        </a>
-        <a
-          href="/admin/posts"
-          className="rounded-2xl border border-gray-200 p-4 hover:shadow-md hover:border-[#3d4f45] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3d4f45] transition"
-          aria-label="Kelola konten"
+        </Link>
+
+        <Link
+          to="/admin/posts"
+          className="rounded-2xl border border-gray-200 p-4 hover:shadow-md hover:border-[#3d4f45] transition"
         >
           <h3 className="mb-1 text-base font-medium text-[#3d4f45]">
             Kelola Konten
@@ -54,25 +59,31 @@ function AdminSection() {
           <p className="text-sm text-gray-600">
             Artikel, banner, & landing copy.
           </p>
-        </a>
-        <a
-          href="/admin/reports"
-          className="rounded-2xl border border-gray-200 p-4 hover:shadow-md hover:border-[#3d4f45] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3d4f45] transition"
-          aria-label="Lihat laporan"
+        </Link>
+
+        <Link
+          to="/admin/reports"
+          className="rounded-2xl border border-gray-200 p-4 hover:shadow-md hover:border-[#3d4f45] transition"
         >
-          <h3 className="mb-1 text-base font-medium text-[#3d4f45]">Laporan</h3>
-          <p className="text-sm text-gray-600">Traffic, signup, konversi.</p>
-        </a>
-        <a
-          href="/admin/settings"
-          className="rounded-2xl border border-gray-200 p-4 hover:shadow-md hover:border-[#3d4f45] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3d4f45] transition"
-          aria-label="Pengaturan situs"
+          <h3 className="mb-1 text-base font-medium text-[#3d4f45]">
+            Laporan
+          </h3>
+          <p className="text-sm text-gray-600">
+            Traffic, signup, konversi.
+          </p>
+        </Link>
+
+        <Link
+          to="/admin/settings"
+          className="rounded-2xl border border-gray-200 p-4 hover:shadow-md hover:border-[#3d4f45] transition"
         >
           <h3 className="mb-1 text-base font-medium text-[#3d4f45]">
             Pengaturan
           </h3>
-          <p className="text-sm text-gray-600">General, SEO, & integrasi.</p>
-        </a>
+          <p className="text-sm text-gray-600">
+            General, SEO, & integrasi.
+          </p>
+        </Link>
       </div>
     </section>
   );
@@ -86,6 +97,7 @@ export default function App() {
     <Router>
       <div className="App">
         <Routes>
+          {/* PUBLIC ROUTES */}
           <Route
             path="/"
             element={<Homepage isAdmin={isAdmin} AdminSection={AdminSection} />}
@@ -101,7 +113,10 @@ export default function App() {
           <Route
             path="/products/:id"
             element={
-              <ProductDetail isAdmin={isAdmin} AdminSection={AdminSection} />
+              <ProductDetail
+                isAdmin={isAdmin}
+                AdminSection={AdminSection}
+              />
             }
           />
           <Route
@@ -115,13 +130,20 @@ export default function App() {
           <Route
             path="/news/:id"
             element={
-              <NewsDetail isAdmin={isAdmin} AdminSection={AdminSection} />
+              <NewsDetail
+                isAdmin={isAdmin}
+                AdminSection={AdminSection}
+              />
             }
           />
           <Route
             path="/contact"
             element={<Contact isAdmin={isAdmin} AdminSection={AdminSection} />}
           />
+
+          {/* ✅ ADMIN ROUTES */}
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin" element={<AdminDashboard />} />
         </Routes>
       </div>
     </Router>
