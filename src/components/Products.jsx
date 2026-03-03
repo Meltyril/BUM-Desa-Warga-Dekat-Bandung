@@ -2,33 +2,56 @@ import React, { useState, useEffect } from "react";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import { fetchProductsList } from "../src/api/productsApi";
+import { fetchCategoriesList } from "../src/api/categoriesApi";
 
 export default function Products({ isAdmin, AdminSection }) {
   const [activeCategory, setActiveCategory] = useState("SEMUA");
   const [products, setProducts] = useState([]);
+  const [allProducts, setAllProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const categories = ["SEMUA", "PERTANIAN", "KERAJINAN", "OLAHAN"];
-
   useEffect(() => {
-    async function loadProducts() {
+    async function loadData() {
       try {
         setLoading(true);
         setError('');
+        
+        // Load categories
+        const categoryList = await fetchCategoriesList();
+        setCategories(categoryList || []);
+        
+        // Load products
         const response = await fetchProductsList({ limit: 50 });
+        setAllProducts(response.data || []);
         setProducts(response.data || []);
       } catch (err) {
-        console.error('Error loading products:', err);
+        console.error('Error loading data:', err);
         setError('Gagal memuat produk');
-        // Fallback to empty array if API fails
+        setAllProducts([]);
         setProducts([]);
       } finally {
         setLoading(false);
       }
     }
-    loadProducts();
+    loadData();
   }, []);
+
+  // Filter products when activeCategory changes
+  useEffect(() => {
+    if (activeCategory === "SEMUA") {
+      setProducts(allProducts);
+    } else {
+      const filtered = allProducts.filter(product => {
+        if (!product.category_id) return false;
+        // Find category by id and match with active category name
+        const matchedCategory = categories.find(cat => cat.id === product.category_id);
+        return matchedCategory && matchedCategory.name.toUpperCase() === activeCategory.toUpperCase();
+      });
+      setProducts(filtered);
+    }
+  }, [activeCategory, allProducts, categories]);
 
   return (
     <div className="min-h-screen bg-white font-serif">
@@ -63,17 +86,27 @@ export default function Products({ isAdmin, AdminSection }) {
 
           {/* Category Filters */}
           <div className="flex justify-center gap-4 mb-12 flex-wrap">
+            <button
+              onClick={() => setActiveCategory("SEMUA")}
+              className={`px-6 py-2 rounded-full text-sm transition ${
+                activeCategory === "SEMUA"
+                  ? "bg-[#3d4f45] text-white"
+                  : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+              }`}
+            >
+              SEMUA
+            </button>
             {categories.map((category) => (
               <button
-                key={category}
-                onClick={() => setActiveCategory(category)}
+                key={category.id}
+                onClick={() => setActiveCategory(category.name.toUpperCase())}
                 className={`px-6 py-2 rounded-full text-sm transition ${
-                  activeCategory === category
+                  activeCategory === category.name.toUpperCase()
                     ? "bg-[#3d4f45] text-white"
                     : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
                 }`}
               >
-                {category}
+                {category.name.toUpperCase()}
               </button>
             ))}
           </div>
@@ -95,7 +128,11 @@ export default function Products({ isAdmin, AdminSection }) {
           {/* Empty State */}
           {!loading && !error && products.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-gray-600">Belum ada produk yang ditambahkan</p>
+              <p className="text-gray-600">
+                {activeCategory === "SEMUA" 
+                  ? "Belum ada produk yang ditambahkan" 
+                  : `Belum ada produk di kategori ${activeCategory}`}
+              </p>
             </div>
           )}
 
@@ -121,7 +158,9 @@ export default function Products({ isAdmin, AdminSection }) {
                   )}
                   <div className="flex-1">
                     <p className="text-xs text-gray-500 mb-2 tracking-wider">
-                      {product.category || "PRODUK"}
+                      {product.category_id 
+                        ? categories.find(cat => cat.id === product.category_id)?.name.toUpperCase() || "PRODUK"
+                        : "PRODUK"}
                     </p>
                     <h3 className="text-2xl mb-2 text-[#3d4f45]">
                       {product.name}

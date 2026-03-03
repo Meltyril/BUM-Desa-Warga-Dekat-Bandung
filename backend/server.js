@@ -49,6 +49,11 @@ const articlesRoutes = require('./routes/articles.routes');
 app.use('/api/articles', articlesRoutes);
 /* ====================================== */
 
+/* ======== [ADD] CATEGORIES ROUTES ======== */
+const categoriesRoutes = require('./routes/categories.routes');
+app.use('/api/categories', categoriesRoutes);
+/* ========================================== */
+
 /* ======== [ADD] ADMIN ROUTES (BARU) ======== */
 const adminRoutes = require('./routes/admin.routes');
 app.use('/api/admin', adminRoutes);
@@ -69,7 +74,7 @@ app.post('/api/products', auth, authorize('product_manager', 'admin'), upload.si
     console.log('[products:create] Body:', req.body);
     console.log('[products:create] File:', req.file);
     
-    const { name, price, description, stock } = req.body;
+    const { name, price, description, stock, category_id } = req.body;
     
     if (!name || price == null) {
       if (req.file) {
@@ -85,13 +90,14 @@ app.post('/api/products', auth, authorize('product_manager', 'admin'), upload.si
       description: description ?? null,
       stock: Number.isFinite(Number(stock)) ? Number(stock) : 0,
       image_url: req.file ? `/uploads/${req.file.filename}` : null,
+      category_id: category_id ? Number(category_id) : null,
     };
 
     console.log('[products:create] Data to insert:', p);
     
     const [result] = await pool.execute(
-      'INSERT INTO products (name, price, description, stock, image_url) VALUES (?,?,?,?,?)',
-      [p.name, p.price, p.description, p.stock, p.image_url]
+      'INSERT INTO products (name, price, description, stock, image_url, category_id) VALUES (?,?,?,?,?,?)',
+      [p.name, p.price, p.description, p.stock, p.image_url, p.category_id]
     );
     
     const [rows] = await pool.execute('SELECT * FROM products WHERE id = ?', [result.insertId]);
@@ -179,7 +185,7 @@ app.get('/api/products/:id', async (req, res) => {
 app.put('/api/products/:id', auth, authorize('product_manager', 'admin'), upload.single('image'), async (req, res, next) => {
   try {
     const id = Number(req.params.id);
-    const { name, price, description, stock } = req.body;
+    const { name, price, description, stock, category_id } = req.body;
     
     console.log('[products:update] Id:', id, 'Body:', req.body, 'File:', req.file);
 
@@ -197,6 +203,7 @@ app.put('/api/products/:id', auth, authorize('product_manager', 'admin'), upload
       description: description ?? prev.description,
       stock: stock != null ? Number(stock) : prev.stock,
       image_url: req.file ? `/uploads/${req.file.filename}` : prev.image_url,
+      category_id: category_id != null ? Number(category_id) : prev.category_id,
     };
 
     if (!next.name || next.price == null) {
@@ -219,9 +226,9 @@ app.put('/api/products/:id', auth, authorize('product_manager', 'admin'), upload
 
     const [result] = await pool.execute(
       `UPDATE products
-       SET name=?, price=?, description=?, stock=?, image_url=?
+       SET name=?, price=?, description=?, stock=?, image_url=?, category_id=?
        WHERE id=?`,
-      [next.name, next.price, next.description, next.stock, next.image_url, id]
+      [next.name, next.price, next.description, next.stock, next.image_url, next.category_id, id]
     );
 
     if (result.affectedRows === 0) {

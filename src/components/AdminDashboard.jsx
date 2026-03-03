@@ -5,6 +5,7 @@ import { createProduct, fetchProductsList, updateProduct, deleteProduct } from '
 import { createNews, fetchAdminNewsList, updateNews, softDeleteNews } from '../src/api/newsApi';
 import { createArticle, fetchAdminArticlesList, updateArticle, softDeleteArticle } from '../src/api/articlesApi';
 import { fetchUsersList, createUser, updateUser, deleteUser, resetUserPassword } from '../src/api/usersApi';
+import { fetchCategoriesList, createCategory, updateCategory, deleteCategory } from '../src/api/categoriesApi';
 import { getToken, removeToken, getAdminRole, setAdminInfo, logout } from '../utils/auth';
 import Navbar from './Navbar';
 
@@ -29,9 +30,20 @@ export default function AdminDashboard() {
     price: '',
     description: '',
     stock: '',
+    category_id: '',
   });
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+
+  // Category states (admin only)
+  const [categories, setCategories] = useState([]);
+  const [loadingCategories, setLoadingCategories] = useState(false);
+  const [categoryError, setCategoryError] = useState('');
+  const [categorySuccess, setCategorySuccess] = useState('');
+  const [showCategoryForm, setShowCategoryForm] = useState(false);
+  const [isEditingCategory, setIsEditingCategory] = useState(false);
+  const [editingCategoryId, setEditingCategoryId] = useState(null);
+  const [categoryFormData, setCategoryFormData] = useState({ name: '', description: '' });
 
   // News states
   const [newsError, setNewsError] = useState('');
@@ -107,6 +119,7 @@ export default function AdminDashboard() {
     loadProducts();
     loadNews();
     loadArticles();
+    loadCategories();
     if (userRole === 'admin') {
       loadUsers();
     }
@@ -161,6 +174,18 @@ export default function AdminDashboard() {
     }
   };
 
+  const loadCategories = async () => {
+    try {
+      setLoadingCategories(true);
+      const categoryList = await fetchCategoriesList();
+      setCategories(categoryList || []);
+    } catch (err) {
+      console.error('Error loading categories:', err);
+    } finally {
+      setLoadingCategories(false);
+    }
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -183,7 +208,7 @@ export default function AdminDashboard() {
   };
 
   const resetForm = () => {
-    setFormData({ name: '', price: '', description: '', stock: '' });
+    setFormData({ name: '', price: '', description: '', stock: '', category_id: '' });
     setImageFile(null);
     setImagePreview(null);
     setIsEditing(false);
@@ -211,6 +236,11 @@ export default function AdminDashboard() {
         description: formData.description.trim() || null,
         stock: formData.stock.trim() ? Number(formData.stock) : 0,
       };
+
+      // Add category if selected
+      if (formData.category_id) {
+        productData.category_id = Number(formData.category_id);
+      }
 
       // Add image if file is selected
       if (imageFile) {
@@ -247,6 +277,7 @@ export default function AdminDashboard() {
       price: String(product.price),
       description: product.description || '',
       stock: String(product.stock || 0),
+      category_id: product.category_id || '',
     });
     setIsEditing(true);
     setEditingId(product.id);
@@ -570,6 +601,199 @@ export default function AdminDashboard() {
 
           <hr className="my-6" />
 
+          {/* CATEGORY MANAGEMENT SECTION - FOR admin AND product_manager ROLES */}
+          {(userRole === 'admin' || userRole === 'product_manager') && (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-medium text-[#3d4f45] text-lg">Kelola Kategori</h2>
+              <button
+                className="bg-[#3d4f45] text-white text-sm px-4 py-2 rounded hover:bg-[#4a5a50] transition"
+                onClick={() => {
+                  if (showCategoryForm) {
+                    setCategoryFormData({ name: '', description: '' });
+                    setIsEditingCategory(false);
+                    setEditingCategoryId(null);
+                    setShowCategoryForm(false);
+                  } else {
+                    setShowCategoryForm(true);
+                  }
+                }}
+              >
+                {showCategoryForm ? 'Tutup Form' : 'Tambah Kategori'}
+              </button>
+            </div>
+
+            {/* Category Form */}
+            {showCategoryForm && (
+              <div className="bg-[#f5f7f6] p-6 rounded-lg mb-6 border border-gray-200">
+                <h3 className="text-lg font-semibold text-[#3d4f45] mb-4">
+                  {isEditingCategory ? 'Edit Kategori' : 'Form Tambah Kategori'}
+                </h3>
+
+                {categoryError && (
+                  <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
+                    {categoryError}
+                  </div>
+                )}
+
+                {categorySuccess && (
+                  <div className="mb-4 p-3 bg-green-100 text-green-700 rounded">
+                    {categorySuccess}
+                  </div>
+                )}
+
+                <form onSubmit={async (e) => {
+                  e.preventDefault();
+                  setCategoryError('');
+                  setCategorySuccess('');
+
+                  try {
+                    if (!categoryFormData.name.trim()) {
+                      setCategoryError('Nama kategori harus diisi');
+                      return;
+                    }
+
+                    if (isEditingCategory && editingCategoryId) {
+                      await updateCategory(editingCategoryId, categoryFormData);
+                      setCategorySuccess('Kategori berhasil diperbarui!');
+                    } else {
+                      await createCategory(categoryFormData);
+                      setCategorySuccess('Kategori berhasil ditambahkan!');
+                    }
+
+                    setCategoryFormData({ name: '', description: '' });
+                    setIsEditingCategory(false);
+                    setEditingCategoryId(null);
+                    await loadCategories();
+
+                    setTimeout(() => {
+                      setShowCategoryForm(false);
+                      setCategorySuccess('');
+                    }, 2000);
+                  } catch (err) {
+                    setCategoryError(err.message || 'Gagal menyimpan kategori');
+                  }
+                }}>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-[#3d4f45] mb-1">
+                      Nama Kategori *
+                    </label>
+                    <input
+                      type="text"
+                      value={categoryFormData.name}
+                      onChange={(e) => setCategoryFormData(prev => ({ ...prev, name: e.target.value }))}
+                      placeholder="Contoh: Pertanian"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3d4f45]"
+                      required
+                    />
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-[#3d4f45] mb-1">
+                      Deskripsi
+                    </label>
+                    <textarea
+                      value={categoryFormData.description}
+                      onChange={(e) => setCategoryFormData(prev => ({ ...prev, description: e.target.value }))}
+                      placeholder="Deskripsi kategori..."
+                      rows="3"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3d4f45]"
+                    />
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      type="submit"
+                      className="flex-1 bg-[#3d4f45] text-white font-medium py-2 rounded-lg hover:bg-[#4a5a50] transition"
+                    >
+                      {isEditingCategory ? 'Perbarui Kategori' : 'Simpan Kategori'}
+                    </button>
+                    {isEditingCategory && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCategoryFormData({ name: '', description: '' });
+                          setIsEditingCategory(false);
+                          setEditingCategoryId(null);
+                        }}
+                        className="px-4 bg-gray-400 text-white font-medium py-2 rounded-lg hover:bg-gray-500 transition"
+                      >
+                        Batal
+                      </button>
+                    )}
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {/* Categories List */}
+            <div className="mt-6">
+              <h3 className="text-lg font-semibold text-[#3d4f45] mb-4">Daftar Kategori ({categories.length})</h3>
+
+              {loadingCategories && <p className="text-gray-600">Memuat kategori...</p>}
+
+              {!loadingCategories && categories.length === 0 && (
+                <p className="text-gray-600">Belum ada kategori. Buat yang pertama!</p>
+              )}
+
+              {!loadingCategories && categories.length > 0 && (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm border-collapse">
+                    <thead>
+                      <tr className="bg-gray-100 border border-gray-300">
+                        <th className="border border-gray-300 px-4 py-2 text-left">ID</th>
+                        <th className="border border-gray-300 px-4 py-2 text-left">Nama</th>
+                        <th className="border border-gray-300 px-4 py-2 text-left">Deskripsi</th>
+                        <th className="border border-gray-300 px-4 py-2 text-center">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {categories.map((cat) => (
+                        <tr key={cat.id} className="border border-gray-300 hover:bg-gray-50">
+                          <td className="border border-gray-300 px-4 py-2">{cat.id}</td>
+                          <td className="border border-gray-300 px-4 py-2">{cat.name}</td>
+                          <td className="border border-gray-300 px-4 py-2">{cat.description || '-'}</td>
+                          <td className="border border-gray-300 px-4 py-2 text-center">
+                            <button
+                              onClick={() => {
+                                setCategoryFormData({ name: cat.name, description: cat.description || '' });
+                                setIsEditingCategory(true);
+                                setEditingCategoryId(cat.id);
+                                setShowCategoryForm(true);
+                              }}
+                              className="text-blue-600 hover:text-blue-800 mr-3"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={async () => {
+                                if (!window.confirm('Apakah Anda yakin ingin menghapus kategori ini?')) return;
+                                try {
+                                  await deleteCategory(cat.id);
+                                  setCategorySuccess('Kategori berhasil dihapus!');
+                                  await loadCategories();
+                                  setTimeout(() => setCategorySuccess(''), 2000);
+                                } catch (err) {
+                                  setCategoryError(err.message || 'Gagal menghapus kategori');
+                                }
+                              }}
+                              className="text-red-600 hover:text-red-800"
+                            >
+                              Hapus
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+          )}
+
+          <hr className="my-6" />
+
           {/* USER MANAGEMENT SECTION - ONLY FOR admin ROLE */}
           {userRole === 'admin' && (
           <div>
@@ -883,6 +1107,25 @@ export default function AdminDashboard() {
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3d4f45]"
                       />
                     </div>
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-[#3d4f45] mb-1">
+                      Kategori
+                    </label>
+                    <select
+                      name="category_id"
+                      value={formData.category_id}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3d4f45]"
+                    >
+                      <option value="">-- Pilih Kategori --</option>
+                      {categories.map((cat) => (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   <div className="mb-4">

@@ -41,12 +41,13 @@ export async function fetchProductDetail(id) {
 // ===== ADMIN =====
 
 // create produk baru dengan optional image
-export async function createProduct({ name, price, description, stock, image }) {
+export async function createProduct({ name, price, description, stock, image, category_id }) {
   const formData = new FormData();
   formData.append('name', name);
   formData.append('price', price);
   if (description) formData.append('description', description);
   formData.append('stock', stock || 0);
+  if (category_id) formData.append('category_id', category_id);
   
   // Add image file if provided
   if (image instanceof File) {
@@ -81,12 +82,13 @@ export async function createProduct({ name, price, description, stock, image }) 
 }
 
 // update produk dengan optional image
-export async function updateProduct(id, { name, price, description, stock, image }) {
+export async function updateProduct(id, { name, price, description, stock, image, category_id }) {
   const formData = new FormData();
   if (name) formData.append('name', name);
   if (price !== undefined) formData.append('price', price);
   if (description) formData.append('description', description);
   if (stock !== undefined) formData.append('stock', stock);
+  if (category_id) formData.append('category_id', category_id);
   
   // Add image file if provided
   if (image instanceof File) {
