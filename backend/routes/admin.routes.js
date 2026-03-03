@@ -66,13 +66,28 @@ router.post('/login', async (req, res) => {
 // =========================
 // ENDPOINT TERPROTEKSI
 // =========================
-router.get('/profile', auth, (req, res) => {
-  res.json({
-    message: 'Ini halaman profil admin yang dilindungi token',
-    admin: req.admin
-  });
-});
+router.get('/profile', auth, async (req, res) => {
+  try {
+    const [rows] = await require('../db').pool.execute(
+      'SELECT id, email, username FROM admins WHERE id = ? LIMIT 1',
+      [req.admin.id]
+    );
 
+    const admin = rows[0];
+
+    if (!admin) {
+      return res.status(404).json({ message: 'Admin tidak ditemukan' });
+    }
+
+    res.json({
+      admin
+    });
+
+  } catch (err) {
+    console.error('[admin:profile]', err);
+    res.status(500).json({ message: 'Terjadi kesalahan server' });
+  }
+});
 
 // =========================
 // FORGOT PASSWORD
