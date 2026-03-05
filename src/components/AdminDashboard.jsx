@@ -60,6 +60,8 @@ export default function AdminDashboard() {
     summary: '',
     status: 'draft',
   });
+  const [newsImageFile, setNewsImageFile] = useState(null);
+  const [newsImagePreview, setNewsImagePreview] = useState(null);
 
   // Article states
   const [articleError, setArticleError] = useState('');
@@ -399,6 +401,8 @@ export default function AdminDashboard() {
   // News handlers
   const resetNewsForm = () => {
     setNewsFormData({ title: '', body: '', summary: '', status: 'draft' });
+    setNewsImageFile(null);
+    setNewsImagePreview(null);
     setIsEditingNews(false);
     setEditingNewsId(null);
     setNewsError('');
@@ -425,6 +429,16 @@ export default function AdminDashboard() {
       setArticleImageFile(file);
       const reader = new FileReader();
       reader.onloadend = () => setArticleImagePreview(reader.result);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleNewsImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setNewsImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => setNewsImagePreview(reader.result);
       reader.readAsDataURL(file);
     }
   };
@@ -514,6 +528,7 @@ export default function AdminDashboard() {
         body: newsFormData.body.trim(),
         summary: newsFormData.summary.trim() || null,
         status: newsFormData.status,
+        image: newsImageFile,
       };
 
       if (isEditingNews && editingNewsId) {
@@ -548,6 +563,8 @@ export default function AdminDashboard() {
     setShowNewsForm(true);
     setNewsError('');
     setNewsSuccess('');
+    setNewsImagePreview(newsItem.image_url ? `http://localhost:5000${newsItem.image_url}` : null);
+    setNewsImageFile(null);
   };
 
   const handleDeleteNews = async (newsId) => {
@@ -1293,6 +1310,32 @@ export default function AdminDashboard() {
                 )}
 
                 <form onSubmit={handleNewsSubmit}>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-[#3d4f45] mb-1">
+                      Gambar Berita
+                    </label>
+                    <div className="flex gap-4">
+                      <div className="flex-1">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleNewsImageChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3d4f45]"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">JPG, PNG, WebP atau GIF (max 5MB)</p>
+                      </div>
+                      {newsImagePreview && (
+                        <div className="w-24 h-24">
+                          <img 
+                            src={newsImagePreview} 
+                            alt="Preview" 
+                            className="w-full h-full object-cover rounded-lg border border-gray-300"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
                   <div className="mb-4">
                     <label className="block text-sm font-medium text-[#3d4f45] mb-1">
                       Judul Berita *

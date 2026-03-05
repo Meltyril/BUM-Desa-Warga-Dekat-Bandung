@@ -99,8 +99,8 @@ export default function News({ isAdmin, AdminSection }) {
                   key={`${item.__source}-${item.id}`}
                   className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition border border-gray-100"
                 >
-                  {item.image_url ? (
-                    <img src={item.image_url} alt={item.title} className="w-full h-48 object-cover" />
+                  {item.cover_url || item.image_url ? (
+                    <img src={`http://localhost:5000${item.cover_url || item.image_url}`} alt={item.title} className="w-full h-48 object-cover" />
                   ) : (
                     <div className="bg-[#b8c5ba] h-48 relative">
                       <div className="absolute top-8 left-8 w-12 h-12 bg-[#a8b5aa] rounded-full"></div>

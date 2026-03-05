@@ -21,6 +21,7 @@ const app = express();
 // Global middleware
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Serve uploads folder as static files with /uploads prefix
 
 // Logger sederhana (lihat setiap request di terminal)

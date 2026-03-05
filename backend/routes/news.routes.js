@@ -5,6 +5,9 @@ const News = require('../models/news.model');
 // === Import middleware auth & authorize ===
 const auth = require('../middleware/auth');
 const authorize = require('../middleware/authorize');
+const upload = require('../middleware/upload');
+const fs = require('fs');
+const path = require('path');
 
 // util kecil buat slug
 function slugify(text = '') {
@@ -157,10 +160,16 @@ router.get('/:slug', async (req, res) => {
 });
 
 // CREATE (HARUS LOGIN ADMIN DENGAN ROLE content_manager)
-router.post('/', auth, authorize('content_manager', 'admin'), async (req, res) => {
+router.post('/', auth, authorize('content_manager', 'admin'), upload.single('image'), async (req, res) => {
   try {
+    console.log('[news:create] req.body:', req.body);
+    console.log('[news:create] req.file:', req.file);
+    
     const v = validateNewsPayload(req.body || {}, { isUpdate: false });
-    if (!v.ok) return res.status(400).json({ error: v.errors.join(', ') });
+    if (!v.ok) {
+      if (req.file) fs.unlinkSync(req.file.path);
+      return res.status(400).json({ error: v.errors.join(', ') });
+    }
 
     const base = slugify(req.body.slug || v.data.title);
     let slug = base;
@@ -171,14 +180,17 @@ router.post('/', auth, authorize('content_manager', 'admin'), async (req, res) =
       if (!taken) { slug = candidate; break; }
     }
 
-    if (!slug) return res.status(409).json({ error: 'cannot generate unique slug' });
+    if (!slug) {
+      if (req.file) fs.unlinkSync(req.file.path);
+      return res.status(409).json({ error: 'cannot generate unique slug' });
+    }
 
     const id = await News.createNews({
       title: v.data.title,
       slug,
       summary: v.data.summary ?? null,
       body: v.data.body,
-      cover_url: v.data.cover_url ?? null,
+      cover_url: req.file ? `/uploads/${req.file.filename}` : null,
       status: v.data.status === 'published' ? 'published' : 'draft',
       published_at: v.data.status === 'published'
         ? (v.data.published_at || new Date())
@@ -187,6 +199,13 @@ router.post('/', auth, authorize('content_manager', 'admin'), async (req, res) =
 
     res.status(201).json({ id, slug });
   } catch (err) {
+    if (req.file) {
+      try {
+        fs.unlinkSync(req.file.path);
+      } catch (e) {
+        console.error('[cleanup] Error deleting file:', e.message);
+      }
+    }
     if (err && err.code === 'ER_DUP_ENTRY') {
       return res.status(409).json({ error: 'slug already exists' });
     }
@@ -196,24 +215,56 @@ router.post('/', auth, authorize('content_manager', 'admin'), async (req, res) =
 });
 
 // UPDATE (HARUS LOGIN ADMIN DENGAN ROLE content_manager)
-router.put('/:id', auth, authorize('content_manager', 'admin'), async (req, res) => {
+router.put('/:id', auth, authorize('content_manager', 'admin'), upload.single('image'), async (req, res) => {
   try {
+    console.log('[news:update] req.body:', req.body);
+    console.log('[news:update] req.file:', req.file);
+    console.log('[news:update] id:', req.params.id);
+    
     const id = Number(req.params.id);
-    if (!Number.isFinite(id)) return res.status(400).json({ error: 'invalid id' });
+    if (!Number.isFinite(id)) {
+      if (req.file) fs.unlinkSync(req.file.path);
+      return res.status(400).json({ error: 'invalid id' });
+    }
 
     const v = validateNewsPayload(req.body || {}, { isUpdate: true });
-    if (!v.ok) return res.status(400).json({ error: v.errors.join(', ') });
+    if (!v.ok) {
+      if (req.file) fs.unlinkSync(req.file.path);
+      return res.status(400).json({ error: v.errors.join(', ') });
+    }
 
     if (v.data.slug) v.data.slug = slugify(v.data.slug);
+    
+    // Handle image upload
+    if (req.file) {
+      v.data.cover_url = `/uploads/${req.file.filename}`;
+      
+      // Optionally delete old image
+      // This would require querying existing news to get old cover_url
+    }
 
     const result = await News.updateNews(id, v.data);
     if (!result.ok) {
+      if (req.file) {
+        try {
+          fs.unlinkSync(req.file.path);
+        } catch (e) {
+          console.error('[cleanup] Error deleting file:', e.message);
+        }
+      }
       if (result.reason === 'not_found') return res.status(404).json({ error: 'news not found' });
       if (result.reason === 'duplicate_slug') return res.status(409).json({ error: 'slug already exists' });
     }
 
     res.json({ ok: true });
   } catch (err) {
+    if (req.file) {
+      try {
+        fs.unlinkSync(req.file.path);
+      } catch (e) {
+        console.error('[cleanup] Error deleting file:', e.message);
+      }
+    }
     console.error('[news:update]', err);
     res.status(500).json({ error: 'failed to update news' });
   }

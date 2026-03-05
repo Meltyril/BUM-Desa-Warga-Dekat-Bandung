@@ -54,11 +54,18 @@ export async function fetchAdminNewsList({
 }
 
 // create news (draft / published)
-export async function createNews(payload) {
-  const res = await fetch(API_BASE, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...authHeaders() },
-    body: JSON.stringify(payload),
+export async function createNews({ title, body, summary, status = 'draft', image } = {}) {
+  const form = new FormData();
+  form.append('title', title);
+  form.append('body', body);
+  if (summary) form.append('summary', summary);
+  form.append('status', status);
+  if (image instanceof File) form.append('image', image);
+
+  const res = await fetch(API_BASE, { 
+    method: 'POST', 
+    body: form, 
+    headers: { ...authHeaders() } 
   });
   if (!res.ok) {
     const msg = await res.text().catch(() => '');
@@ -68,11 +75,18 @@ export async function createNews(payload) {
 }
 
 // update news
-export async function updateNews(id, payload) {
+export async function updateNews(id, { title, body, summary, status, image } = {}) {
+  const form = new FormData();
+  if (title) form.append('title', title);
+  if (body) form.append('body', body);
+  if (summary !== undefined) form.append('summary', summary);
+  if (status) form.append('status', status);
+  if (image instanceof File) form.append('image', image);
+
   const res = await fetch(`${API_BASE}/${id}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json', ...authHeaders() },
-    body: JSON.stringify(payload),
+    body: form,
+    headers: { ...authHeaders() }
   });
   if (!res.ok) {
     const msg = await res.text().catch(() => '');
