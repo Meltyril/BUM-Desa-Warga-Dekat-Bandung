@@ -65,6 +65,11 @@ const usersRoutes = require('./routes/users.routes');
 app.use('/api/users', usersRoutes);
 /* ============================================ */
 
+/* ======== [ADD] SERVICES ROUTES ======== */
+const servicesRoutes = require('./routes/services.routes');
+app.use('/api/services', servicesRoutes);
+/* ======================================== */
+
 // =======================
 // PRODUCTS (MySQL)
 // =======================

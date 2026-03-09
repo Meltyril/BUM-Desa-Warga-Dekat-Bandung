@@ -6,6 +6,7 @@ import { createNews, fetchAdminNewsList, updateNews, softDeleteNews } from '../s
 import { createArticle, fetchAdminArticlesList, updateArticle, softDeleteArticle } from '../src/api/articlesApi';
 import { fetchUsersList, createUser, updateUser, deleteUser, resetUserPassword } from '../src/api/usersApi';
 import { fetchCategoriesList, createCategory, updateCategory, deleteCategory } from '../src/api/categoriesApi';
+import { fetchServicesList, createService, updateService, deleteService } from '../src/api/servicesApi';
 import { getToken, removeToken, getAdminRole, setAdminInfo, logout } from '../utils/auth';
 import Navbar from './Navbar';
 
@@ -92,6 +93,19 @@ export default function AdminDashboard() {
     role: 'admin',
   });
 
+  // Services states (admin only)
+  const [services, setServices] = useState([]);
+  const [loadingServices, setLoadingServices] = useState(false);
+  const [serviceError, setServiceError] = useState('');
+  const [serviceSuccess, setServiceSuccess] = useState('');
+  const [showServiceForm, setShowServiceForm] = useState(false);
+  const [isEditingService, setIsEditingService] = useState(false);
+  const [editingServiceId, setEditingServiceId] = useState(null);
+  const [deletingService, setDeletingService] = useState(null);
+  const [serviceFormData, setServiceFormData] = useState({ title: '', description: '', sort_order: '' });
+  const [serviceImageFile, setServiceImageFile] = useState(null);
+  const [serviceImagePreview, setServiceImagePreview] = useState(null);
+
   const navigate = useNavigate();
 
   // Load admin profile
@@ -122,6 +136,7 @@ export default function AdminDashboard() {
     loadNews();
     loadArticles();
     loadCategories();
+    loadServices();
     if (userRole === 'admin') {
       loadUsers();
     }
@@ -185,6 +200,19 @@ export default function AdminDashboard() {
       console.error('Error loading categories:', err);
     } finally {
       setLoadingCategories(false);
+    }
+  };
+
+  const loadServices = async () => {
+    try {
+      setLoadingServices(true);
+      const servicesList = await fetchServicesList();
+      setServices(servicesList.data || []);
+    } catch (err) {
+      console.error('Error loading services:', err);
+      setServiceError('Gagal memuat layanan');
+    } finally {
+      setLoadingServices(false);
     }
   };
 
@@ -395,6 +423,106 @@ export default function AdminDashboard() {
       setUserError(err.message || 'Gagal menghapus pengguna');
     } finally {
       setDeletingUser(null);
+    }
+  };
+
+  // Services handlers
+  const resetServiceForm = () => {
+    setServiceFormData({ title: '', description: '', sort_order: '' });
+    setServiceImageFile(null);
+    setServiceImagePreview(null);
+    setIsEditingService(false);
+    setEditingServiceId(null);
+    setServiceError('');
+    setServiceSuccess('');
+  };
+
+  const handleServiceInputChange = (e) => {
+    const { name, value } = e.target;
+    setServiceFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleServiceImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setServiceImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => setServiceImagePreview(reader.result);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleServiceSubmit = async (e) => {
+    e.preventDefault();
+    setServiceError('');
+    setServiceSuccess('');
+
+    try {
+      if (!serviceFormData.title.trim() || !serviceFormData.description.trim()) {
+        setServiceError('Judul dan deskripsi layanan harus diisi');
+        return;
+      }
+
+      const serviceData = {
+        title: serviceFormData.title.trim(),
+        description: serviceFormData.description.trim(),
+        sort_order: serviceFormData.sort_order || 999,
+        image: serviceImageFile,
+      };
+
+      if (isEditingService && editingServiceId) {
+        await updateService(editingServiceId, serviceData);
+        setServiceSuccess('Layanan berhasil diperbarui!');
+      } else {
+        await createService(serviceData);
+        setServiceSuccess('Layanan berhasil ditambahkan!');
+      }
+
+      resetServiceForm();
+      await loadServices();
+
+      setTimeout(() => {
+        setShowServiceForm(false);
+        setServiceSuccess('');
+      }, 2000);
+    } catch (err) {
+      setServiceError(err.message || 'Gagal menyimpan layanan');
+    }
+  };
+
+  const handleEditService = (serviceItem) => {
+    setServiceFormData({
+      title: serviceItem.title,
+      description: serviceItem.description,
+      sort_order: serviceItem.sort_order || '',
+    });
+    setIsEditingService(true);
+    setEditingServiceId(serviceItem.id);
+    setShowServiceForm(true);
+    setServiceError('');
+    setServiceSuccess('');
+    setServiceImagePreview(serviceItem.image_url ? `http://localhost:5000${serviceItem.image_url}` : null);
+    setServiceImageFile(null);
+  };
+
+  const handleDeleteService = async (serviceId) => {
+    if (!window.confirm('Apakah Anda yakin ingin menghapus layanan ini?')) {
+      return;
+    }
+
+    try {
+      setDeletingService(serviceId);
+      await deleteService(serviceId);
+      setServiceSuccess('Layanan berhasil dihapus!');
+      await loadServices();
+      setTimeout(() => setServiceSuccess(''), 2000);
+    } catch (err) {
+      setServiceError(err.message || 'Gagal menghapus layanan');
+    } finally {
+      setDeletingService(null);
     }
   };
 
@@ -1570,6 +1698,95 @@ export default function AdminDashboard() {
 
               <p className="text-sm text-gray-600 mt-6">Artikel yang dipublikasikan akan langsung muncul di halaman <Link to="/articles" className="text-[#3d4f45] hover:underline font-medium">Artikel</Link>.</p>
             </div>
+          )}
+
+          {/* SERVICES MANAGEMENT SECTION - ONLY FOR admin ROLE */}
+          {userRole === 'admin' && (
+          <div>
+            <hr className="my-6" />
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-medium text-[#3d4f45] text-lg">Kelola Layanan</h2>
+              <button
+                className="bg-[#3d4f45] text-white text-sm px-4 py-2 rounded hover:bg-[#4a5a50] transition"
+                onClick={() => { if (showServiceForm) { resetServiceForm(); setShowServiceForm(false); } else { setShowServiceForm(true); } }}
+              >
+                {showServiceForm ? 'Tutup Form' : 'Tambah Layanan'}
+              </button>
+            </div>
+
+            {showServiceForm && (
+              <div className="bg-[#f5f7f6] p-6 rounded-lg mb-6 border border-gray-200">
+                <h3 className="text-lg font-semibold text-[#3d4f45] mb-4">{isEditingService ? 'Edit Layanan' : 'Form Tambah Layanan'}</h3>
+
+                {serviceError && (<div className="mb-4 p-3 bg-red-100 text-red-700 rounded">{serviceError}</div>)}
+                {serviceSuccess && (<div className="mb-4 p-3 bg-green-100 text-green-700 rounded">{serviceSuccess}</div>)}
+
+                <form onSubmit={handleServiceSubmit}>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-[#3d4f45] mb-1">Gambar Layanan</label>
+                    <div className="flex gap-4">
+                      <div className="flex-1">
+                        <input type="file" accept="image/*" onChange={handleServiceImageChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                        <p className="text-xs text-gray-500 mt-1">JPG, PNG, WebP atau GIF (max 5MB)</p>
+                      </div>
+                      {serviceImagePreview && (<div className="w-24 h-24"><img src={serviceImagePreview} alt="Preview" className="w-full h-full object-cover rounded-lg border"/></div>)}
+                    </div>
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-[#3d4f45] mb-1">Judul Layanan *</label>
+                    <input type="text" name="title" value={serviceFormData.title} onChange={handleServiceInputChange} placeholder="Contoh: Pengerajin Kayu" required className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-[#3d4f45] mb-1">Deskripsi Layanan *</label>
+                    <textarea name="description" value={serviceFormData.description} onChange={handleServiceInputChange} placeholder="Deskripsi lengkap layanan..." rows="4" required className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-[#3d4f45] mb-1">Urutan Tampil</label>
+                    <input type="number" name="sort_order" value={serviceFormData.sort_order} onChange={handleServiceInputChange} placeholder="999" className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button type="submit" className="flex-1 bg-[#3d4f45] text-white font-medium py-2 rounded-lg hover:bg-[#4a5a50]">
+                      {isEditingService ? 'Perbarui Layanan' : 'Simpan Layanan'}
+                    </button>
+                    {isEditingService && (
+                      <button type="button" onClick={resetServiceForm} className="px-4 bg-gray-400 text-white font-medium py-2 rounded-lg hover:bg-gray-500">
+                        Batal
+                      </button>
+                    )}
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {loadingServices && <div className="text-center py-4 text-gray-600">Sedang memuat layanan...</div>}
+            {serviceError && !loadingServices && <div className="text-center py-4 text-red-600">{serviceError}</div>}
+
+            {!loadingServices && services.length > 0 && (
+              <div className="space-y-3">
+                {services.map(s => (
+                  <div key={s.id} className="border border-gray-300 rounded p-4 bg-white hover:bg-gray-50">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h4 className="font-medium text-[#3d4f45] mb-1">{s.title}</h4>
+                        <p className="text-sm text-gray-600 line-clamp-2">{s.description}</p>
+                        <p className="text-xs text-gray-500 mt-2">Urutan: {s.sort_order}</p>
+                      </div>
+                      <div className="flex gap-2 ml-4">
+                        <button onClick={() => handleEditService(s)} className="bg-blue-500 text-white px-3 py-1 rounded text-xs">Edit</button>
+                        <button onClick={() => handleDeleteService(s.id)} disabled={deletingService===s.id} className="bg-red-500 text-white px-3 py-1 rounded text-xs">{deletingService===s.id ? 'Menghapus...' : 'Hapus'}</button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <p className="text-sm text-gray-600 mt-6">Layanan yang ditambahkan akan langsung muncul di halaman <Link to="/services" className="text-[#3d4f45] hover:underline font-medium">Layanan</Link>.</p>
+          </div>
           )}
 
           {/* MESSAGE FOR LIMITED ACCESS */}

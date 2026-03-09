@@ -1,46 +1,30 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
+import { fetchServicesList } from "../src/api/servicesApi";
 
 export default function Services({ isAdmin, AdminSection }) {
-  const services = [
-    {
-      id: 1,
-      title: "Layanan 1",
-      description:
-        "Kami menyediakan sebuah layanan yang tepat. Kami adalah pihak penyedia Untuk BUM Desa yang juga untuk digunakan oleh atau untuk komunitas kepentingan bersama. Layanan dan dukungan support dapat dihubungi untuk waktu waktu yang tepat. Hasilkan dan kenali tipe kualitas kami dan lain-lain.",
-    },
-    {
-      id: 2,
-      title: "Layanan 2",
-      description:
-        "Kami menyediakan sebuah layanan yang tepat. Kami adalah pihak penyedia Untuk BUM Desa yang juga untuk digunakan oleh atau untuk komunitas kepentingan bersama. Layanan dan dukungan support dapat dihubungi untuk waktu waktu yang tepat. Hasilkan dan kenali tipe kualitas kami dan lain-lain.",
-    },
-    {
-      id: 3,
-      title: "Layanan 3",
-      description:
-        "Kami menyediakan sebuah layanan yang tepat. Kami adalah pihak penyedia Untuk BUM Desa yang juga untuk digunakan oleh atau untuk komunitas kepentingan bersama. Layanan dan dukungan support dapat dihubungi untuk waktu waktu yang tepat. Hasilkan dan kenali tipe kualitas kami dan lain-lain.",
-    },
-    {
-      id: 4,
-      title: "Layanan 4",
-      description:
-        "Kami menyediakan sebuah layanan yang tepat. Kami adalah pihak penyedia Untuk BUM Desa yang juga untuk digunakan oleh atau untuk komunitas kepentingan bersama. Layanan dan dukungan support dapat dihubungi untuk waktu waktu yang tepat. Hasilkan dan kenali tipe kualitas kami dan lain-lain.",
-    },
-    {
-      id: 5,
-      title: "Layanan 5",
-      description:
-        "Kami menyediakan sebuah layanan yang tepat. Kami adalah pihak penyedia Untuk BUM Desa yang juga untuk digunakan oleh atau untuk komunitas kepentingan bersama. Layanan dan dukungan support dapat dihubungi untuk waktu waktu yang tepat. Hasilkan dan kenali tipe kualitas kami dan lain-lain.",
-    },
-    {
-      id: 6,
-      title: "Layanan 6",
-      description:
-        "Kami menyediakan sebuah layanan yang tepat. Kami adalah pihak penyedia Untuk BUM Desa yang juga untuk digunakan oleh atau untuk komunitas kepentingan bersama. Layanan dan dukungan support dapat dihubungi untuk waktu waktu yang tepat. Hasilkan dan kenali tipe kualitas kami dan lain-lain.",
-    },
-  ];
+  const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    async function loadServices() {
+      try {
+        setLoading(true);
+        setError('');
+        const res = await fetchServicesList();
+        setServices(res.data || []);
+      } catch (err) {
+        console.error('Error loading services:', err);
+        setError('Gagal memuat layanan');
+        setServices([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadServices();
+  }, []);
 
   return (
     <div className="min-h-screen bg-white font-serif">
@@ -65,29 +49,48 @@ export default function Services({ isAdmin, AdminSection }) {
 
       {/* Main Content */}
       <section className="py-20 px-6 bg-white">
-        <div className="max-w-4xl mx-auto text-center mb-16">
-          <h2 className="text-3xl mb-6 text-[#3d4f45] font-light">
-            Melayani Dengan Sepenuh Hati
-          </h2>
-          <p className="text-gray-600 text-sm leading-relaxed">
-            AMDEC (Tax agenda) et nihilum tellus socus. Pharetra mauris riserra
-            ritum at tincidunt aenean neque gravida. Et non quam lorem et et
-            risus duis amet sint, ut ridiculus at.
-          </p>
-        </div>
+        <div className="max-w-6xl mx-auto">
+          {loading && <div className="text-center py-8 text-gray-600">Sedang memuat layanan...</div>}
+          {error && !loading && <div className="text-center py-8 text-red-600">{error}</div>}
+          {!loading && services.length === 0 && <div className="text-center py-8 text-gray-600">Belum ada layanan yang ditambahkan</div>}
+          
+          {!loading && services.length > 0 && services.map((service, idx) => {
+            const isEven = idx % 2 === 0;
+            const serviceNumber = String(idx + 1).padStart(2, '0');
 
-        <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12">
-          {services.map((service) => (
-            <div key={service.id} className="flex gap-6">
-              <div className="w-24 h-24 bg-[#b8c5ba] rounded-full flex-shrink-0"></div>
-              <div>
-                <h3 className="text-xl mb-3 text-[#3d4f45]">{service.title}</h3>
-                <p className="text-gray-600 text-sm leading-relaxed">
-                  {service.description}
-                </p>
+            return (
+              <div key={service.id} className={`flex items-center gap-12 mb-24 ${isEven ? 'flex-row' : 'flex-row-reverse'}`}>
+                {/* Text Content */}
+                <div className="flex-1 relative">
+                  <div className="flex gap-4 items-start">
+                    <div className="w-16 h-16 bg-[#b8c5ba] rounded-full flex items-center justify-center flex-shrink-0 text-[#3d4f45] font-light text-xl">
+                      {serviceNumber}
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-light text-[#3d4f45] mb-3">{service.title}</h3>
+                      <p className="text-gray-600 text-sm leading-relaxed mb-4">{service.description}</p>
+                      <ul className="text-xs text-gray-600 space-y-2">
+                        {/* You can add bullet points here if needed */}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Image Content */}
+                <div className="flex-1">
+                  {service.image_url ? (
+                    <img 
+                      src={`http://localhost:5000${service.image_url}`} 
+                      alt={service.title} 
+                      className="w-full h-64 object-cover rounded-lg shadow-lg"
+                    />
+                  ) : (
+                    <div className="w-full h-64 bg-[#b8c5ba] rounded-lg shadow-lg"></div>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 
