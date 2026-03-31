@@ -2,12 +2,15 @@
 require('dotenv').config();
 const mysql = require('mysql2/promise');
 
+const DATABASE_URL = process.env.MYSQL_PUBLIC_URL;
+
+if (!DATABASE_URL) {
+  console.error('[db] ❌ MYSQL_PUBLIC_URL not found');
+  process.exit(1);
+}
+
 const pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  port: process.env.DB_PORT || 3306,
+  uri: DATABASE_URL,
   waitForConnections: true,
   connectionLimit: 10,
 });
