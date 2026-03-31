@@ -2,31 +2,32 @@
 require('dotenv').config();
 const mysql = require('mysql2/promise');
 
-const host = process.env.DB_HOST || process.env.MYSQL_HOST || 'localhost';
-const user = process.env.DB_USER || process.env.MYSQL_USER || 'root';
-const password = (process.env.DB_PASS ?? process.env.MYSQL_PASSWORD ?? '');
-const database = process.env.DB_NAME || process.env.MYSQL_DATABASE || 'shopdb';
-const port = Number(process.env.DB_PORT || process.env.MYSQL_PORT || 3306);
+const DATABASE_URL =
+  process.env.MYSQL_PUBLIC_URL ||
+  process.env.MYSQL_URL ||
+  process.env.DATABASE_URL;
+
+if (!DATABASE_URL) {
+  console.error('[db] ❌ No database URL found in environment variables');
+  process.exit(1);
+}
 
 const pool = mysql.createPool({
-  host,
-  user,
-  password,
-  database,
-  port,
+  uri: DATABASE_URL,
   waitForConnections: true,
   connectionLimit: 10,
+  queueLimit: 0,
 });
 
-// Tes koneksi ringan saat start (opsional tapi membantu debug)
+// Tes koneksi saat start
 (async () => {
   try {
     const conn = await pool.getConnection();
     await conn.query('SELECT 1');
     conn.release();
-    console.log(`[db] Connected to MySQL ${host}:${port}, db=${database}`);
+    console.log('[db] ✅ Connected to MySQL successfully');
   } catch (err) {
-    console.error('[db] Failed connect to MySQL:', err.message);
+    console.error('[db] ❌ Failed connect to MySQL:', err.message);
   }
 })();
 
