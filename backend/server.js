@@ -2,11 +2,10 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const path = require('path'); // [NEW]
-const { pool } = require('./db'); // ⬅️ pakai MySQL pool
+const path = require('path');
+const { pool } = require('./db');
 
 const app = express();
-
 // Global middleware
 app.use(cors());
 app.use(express.json());
