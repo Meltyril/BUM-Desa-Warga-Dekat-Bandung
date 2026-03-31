@@ -2,30 +2,41 @@
 require('dotenv').config();
 const mysql = require('mysql2/promise');
 
-const DATABASE_URL =
-  process.env.MYSQL_PUBLIC_URL ||
-  process.env.MYSQL_URL ||
-  process.env.DATABASE_URL;
+const host = process.env.MYSQLHOST;
+const user = process.env.MYSQLUSER;
+const password = process.env.MYSQLPASSWORD;
+const database = process.env.MYSQLDATABASE;
+const port = process.env.MYSQLPORT || 3306;
 
-if (!DATABASE_URL) {
-  console.error('[db] ❌ No database URL found in environment variables');
+if (!host || !user || !database) {
+  console.error('[db] ❌ Missing database environment variables');
+  console.error({
+    MYSQLHOST: host,
+    MYSQLUSER: user,
+    MYSQLDATABASE: database,
+    MYSQLPORT: port
+  });
   process.exit(1);
 }
 
 const pool = mysql.createPool({
-  uri: DATABASE_URL,
+  host,
+  user,
+  password,
+  database,
+  port,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
 });
 
-// Tes koneksi saat start
+// Test koneksi
 (async () => {
   try {
     const conn = await pool.getConnection();
     await conn.query('SELECT 1');
     conn.release();
-    console.log('[db] ✅ Connected to MySQL successfully');
+    console.log(`[db] ✅ Connected to MySQL ${host}:${port}`);
   } catch (err) {
     console.error('[db] ❌ Failed connect to MySQL:', err.message);
   }
