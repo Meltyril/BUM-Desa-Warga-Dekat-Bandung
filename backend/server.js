@@ -6,8 +6,34 @@ const path = require('path');
 const { pool } = require('./db');
 
 const app = express();
-// Global middleware
-app.use(cors());
+
+// ✅ CORS — izinkan domain frontend cPanel
+app.use(cors({
+  origin: function (origin, callback) {
+    // Izinkan request tanpa origin (Postman, mobile app, curl)
+    if (!origin) return callback(null, true);
+
+    const allowed = [
+      process.env.FRONTEND_URL,          // set di Railway env vars
+      'http://localhost:3000',
+      'http://localhost:5173',
+    ].filter(Boolean);
+
+    if (allowed.some(o => origin.startsWith(o))) {
+      callback(null, true);
+    } else {
+      console.warn('[cors] blocked origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+
+// Pastikan preflight OPTIONS selalu dijawab
+app.options('*', cors());
+
 app.use(express.json());
 
 // Logger sederhana (lihat setiap request di terminal)
@@ -17,7 +43,6 @@ app.use((req, _res, next) => {
 });
 
 // Health & root routes (buat tes cepat)
-// ⬇️ Ganti '/' jadi '/status' agar root ('/') bisa dipakai untuk SPA frontend
 app.get('/status', (_req, res) => {
   res.send('Backend is running 🚀');
 });
@@ -26,21 +51,18 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
 });
 
-/* ======== [ADD] NEWS ROUTES (2 baris) ======== */
+/* ======== NEWS ROUTES ======== */
 const newsRoutes = require('./routes/news.routes');
 app.use('/api/news', newsRoutes);
-/* ============================================ */
 
-/* ======== [ADD] ADMIN ROUTES (BARU) ======== */
+/* ======== ADMIN ROUTES ======== */
 const adminRoutes = require('./routes/admin.routes');
 app.use('/api/admin', adminRoutes);
-/* ========================================== */
 
 // =======================
 // PRODUCTS (MySQL)
 // =======================
 
-// CREATE ( di simpan ke MySQL)
 app.post('/api/products', async (req, res) => {
   try {
     const { name, price, description, stock } = req.body;
@@ -66,7 +88,6 @@ app.post('/api/products', async (req, res) => {
   }
 });
 
-// READ (list + query sederhana ?q=&page=&limit=)
 app.get('/api/products', async (req, res) => {
   try {
     const q = (req.query.q || '').toString().trim();
@@ -97,7 +118,6 @@ app.get('/api/products', async (req, res) => {
   }
 });
 
-// READ (detail by id)
 app.get('/api/products/:id', async (req, res) => {
   try {
     const id = Number(req.params.id);
@@ -112,13 +132,11 @@ app.get('/api/products/:id', async (req, res) => {
   }
 });
 
-// UPDATE (PUT /api/products/:id)
 app.put('/api/products/:id', async (req, res) => {
   try {
     const id = Number(req.params.id);
     const { name, price, description, stock } = req.body;
 
-    // ambil data lama
     const [existing] = await pool.execute('SELECT * FROM products WHERE id = ?', [id]);
     if (!existing.length) return res.status(404).json({ error: 'Produk tidak ditemukan' });
 
@@ -135,9 +153,7 @@ app.put('/api/products/:id', async (req, res) => {
     }
 
     const [result] = await pool.execute(
-      `UPDATE products
-       SET name=?, price=?, description=?, stock=?
-       WHERE id=?`,
+      `UPDATE products SET name=?, price=?, description=?, stock=? WHERE id=?`,
       [next.name, next.price, next.description, next.stock, id]
     );
 
@@ -153,7 +169,6 @@ app.put('/api/products/:id', async (req, res) => {
   }
 });
 
-// DELETE (DELETE /api/products/:id)
 app.delete('/api/products/:id', async (req, res) => {
   try {
     const id = Number(req.params.id);
@@ -168,8 +183,7 @@ app.delete('/api/products/:id', async (req, res) => {
   }
 });
 
-
-// LOKASI / MAPS (Footer)
+// LOKASI / MAPS
 app.get('/api/location/business', (_req, res) => {
   const name    = process.env.BUSINESS_NAME || 'Lokasi';
   const address = process.env.BUSINESS_ADDRESS || '';
@@ -180,35 +194,24 @@ app.get('/api/location/business', (_req, res) => {
     return res.status(500).json({ error: 'Koordinat bisnis belum di-set di .env' });
   }
 
-  // ✅ Klik: buka Google Maps tepat ke koordinat (format Maps URLs, api=1 wajib)
-  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`; // [web:98]
-
-  // ✅ Klik: petunjuk arah ke koordinat
-  const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`; // [web:98]
-
-  // ✅ Tampilan gambar peta (iframe) tanpa API key
-  // Catatan: ini bukan Maps Embed API resmi, tapi biasanya paling “langsung jadi”.
-  const embedUrl = `https://maps.google.com/maps?q=${lat},${lng}&t=m&z=16&output=embed`; // [web:125]
+  const mapsUrl       = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+  const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+  const embedUrl      = `https://maps.google.com/maps?q=${lat},${lng}&t=m&z=16&output=embed`;
 
   res.json({ name, address, lat, lng, mapsUrl, directionsUrl, embedUrl });
 });
 
 // =======================
-// [NEW] SERVE FRONTEND BUILD (SPA)
+// SERVE FRONTEND BUILD (SPA)
 // =======================
-// Lokasi folder build frontend (bisa diubah via env FRONTEND_DIST)
 const FRONTEND_DIST = process.env.FRONTEND_DIST || path.join(__dirname, 'dist');
-
-// Serve file statis dari build frontend
 app.use(express.static(FRONTEND_DIST));
 
-// ✅ Fallback baru yang kompatibel Express 5
 app.get(/^\/(?!api).*/, (req, res) => {
   res.sendFile(path.join(FRONTEND_DIST, 'index.html'));
 });
 
 // 404 & Error handlers
-// Handler 404 khusus API (karena route SPA di atas sudah menangani non-API)
 app.use((req, res) => {
   res.status(404).json({ error: `Route ${req.method} ${req.originalUrl} tidak ditemukan` });
 });
