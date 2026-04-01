@@ -31,8 +31,8 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
-// Pastikan preflight OPTIONS selalu dijawab
-app.options('*', cors());
+// Pastikan preflight OPTIONS selalu dijawab (kompatibel Express 5)
+app.options(/.*/, cors());
 
 app.use(express.json());
 
