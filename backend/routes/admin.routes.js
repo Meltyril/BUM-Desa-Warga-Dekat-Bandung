@@ -13,7 +13,10 @@ const {
 
 const auth = require('../middleware/auth');
 
-
+router.get('/generate-hash', async (req, res) => {
+  const hash = await bcrypt.hash('admin123', 10);
+  res.json({ hash });
+});
 // =========================
 // LOGIN UNTUK ADMIN
 // =========================
