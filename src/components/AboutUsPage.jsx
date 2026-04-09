@@ -1,9 +1,36 @@
 //AboutUsPage.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
+import { fetchProfilesList } from "../src/api/profilesApi";
 
 export default function AboutUs({ onNavigate }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [profiles, setProfiles] = useState([]);
+  const [loadingProfiles, setLoadingProfiles] = useState(true);
+  const [errorProfiles, setErrorProfiles] = useState('');
+
+  useEffect(() => {
+    async function loadProfiles() {
+      try {
+        console.log('[AboutUsPage] Loading profiles...');
+        setLoadingProfiles(true);
+        setErrorProfiles('');
+        const res = await fetchProfilesList();
+        console.log('[AboutUsPage] Response:', res);
+        const profilesData = res.data || [];
+        console.log('[AboutUsPage] Profiles data:', profilesData);
+        setProfiles(profilesData);
+        console.log('[AboutUsPage] Set profiles to:', profilesData.length, 'items');
+      } catch (err) {
+        console.error('[AboutUsPage] Error loading profiles:', err);
+        setErrorProfiles(err.message || 'Gagal memuat profil');
+        setProfiles([]);
+      } finally {
+        setLoadingProfiles(false);
+      }
+    }
+    loadProfiles();
+  }, []);
 
   const handleNavClick = (page) => {
     setMobileMenuOpen(false);
@@ -203,6 +230,40 @@ export default function AboutUs({ onNavigate }) {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Values Section */}
+      <section className="py-20 px-6 bg-white">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-3xl text-center mb-12 text-[#3d4f45]">Pengurus BUM Desa</h2>
+          
+          {loadingProfiles && <div className="text-center py-8 text-gray-600">Sedang memuat profil...</div>}
+          {errorProfiles && !loadingProfiles && <div className="text-center py-8 text-red-600">{errorProfiles}</div>}
+          {!loadingProfiles && profiles.length === 0 && <div className="text-center py-8 text-gray-600">Belum ada profil yang ditambahkan</div>}
+          
+          {!loadingProfiles && profiles.length > 0 && (
+            <div className="grid md:grid-cols-2 gap-12">
+              {profiles.map((profile) => (
+                <div key={profile.id} className="text-center">
+                  {profile.image_url ? (
+                    <img 
+                      src={`http://localhost:5000${profile.image_url}`}
+                      alt={profile.name}
+                      className="w-32 h-32 object-cover rounded-full mx-auto mb-4 shadow-lg"
+                    />
+                  ) : (
+                    <div className="w-32 h-32 bg-[#b8c5ba] rounded-full mx-auto mb-4 shadow-lg"></div>
+                  )}
+                  <h3 className="text-xl font-medium text-[#3d4f45] mb-1">{profile.name}</h3>
+                  {profile.position && <p className="text-sm text-gray-500 mb-3 font-medium">{profile.position}</p>}
+                  <p className="text-gray-600 text-sm leading-relaxed">
+                    {profile.description}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 

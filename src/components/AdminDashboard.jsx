@@ -7,6 +7,7 @@ import { createArticle, fetchAdminArticlesList, updateArticle, softDeleteArticle
 import { fetchUsersList, createUser, updateUser, deleteUser, resetUserPassword } from '../src/api/usersApi';
 import { fetchCategoriesList, createCategory, updateCategory, deleteCategory } from '../src/api/categoriesApi';
 import { fetchServicesList, createService, updateService, deleteService } from '../src/api/servicesApi';
+import { fetchProfilesList, createProfile, updateProfile, deleteProfile } from '../src/api/profilesApi';
 import { getToken, removeToken, getAdminRole, setAdminInfo, logout } from '../utils/auth';
 import Navbar from './Navbar';
 
@@ -106,6 +107,19 @@ export default function AdminDashboard() {
   const [serviceImageFile, setServiceImageFile] = useState(null);
   const [serviceImagePreview, setServiceImagePreview] = useState(null);
 
+  // Profiles states (admin only)
+  const [profiles, setProfiles] = useState([]);
+  const [loadingProfiles, setLoadingProfiles] = useState(false);
+  const [profileError, setProfileError] = useState('');
+  const [profileSuccess, setProfileSuccess] = useState('');
+  const [showProfileForm, setShowProfileForm] = useState(false);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [editingProfileId, setEditingProfileId] = useState(null);
+  const [deletingProfile, setDeletingProfile] = useState(null);
+  const [profileFormData, setProfileFormData] = useState({ name: '', position: '', description: '', sort_order: '' });
+  const [profileImageFile, setProfileImageFile] = useState(null);
+  const [profileImagePreview, setProfileImagePreview] = useState(null);
+
   const navigate = useNavigate();
 
   // Load admin profile
@@ -137,6 +151,7 @@ export default function AdminDashboard() {
     loadArticles();
     loadCategories();
     loadServices();
+    loadProfiles();
     if (userRole === 'admin') {
       loadUsers();
     }
@@ -213,6 +228,19 @@ export default function AdminDashboard() {
       setServiceError('Gagal memuat layanan');
     } finally {
       setLoadingServices(false);
+    }
+  };
+
+  const loadProfiles = async () => {
+    try {
+      setLoadingProfiles(true);
+      const profilesList = await fetchProfilesList();
+      setProfiles(profilesList.data || []);
+    } catch (err) {
+      console.error('Error loading profiles:', err);
+      setProfileError('Gagal memuat profil');
+    } finally {
+      setLoadingProfiles(false);
     }
   };
 
@@ -523,6 +551,108 @@ export default function AdminDashboard() {
       setServiceError(err.message || 'Gagal menghapus layanan');
     } finally {
       setDeletingService(null);
+    }
+  };
+
+  // Profiles handlers
+  const resetProfileForm = () => {
+    setProfileFormData({ name: '', position: '', description: '', sort_order: '' });
+    setProfileImageFile(null);
+    setProfileImagePreview(null);
+    setIsEditingProfile(false);
+    setEditingProfileId(null);
+    setProfileError('');
+    setProfileSuccess('');
+  };
+
+  const handleProfileInputChange = (e) => {
+    const { name, value } = e.target;
+    setProfileFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleProfileImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setProfileImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => setProfileImagePreview(reader.result);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleProfileSubmit = async (e) => {
+    e.preventDefault();
+    setProfileError('');
+    setProfileSuccess('');
+
+    try {
+      if (!profileFormData.name.trim()) {
+        setProfileError('Nama pengurus harus diisi');
+        return;
+      }
+
+      const profileData = {
+        name: profileFormData.name.trim(),
+        position: profileFormData.position.trim() || null,
+        description: profileFormData.description.trim() || null,
+        sort_order: profileFormData.sort_order || 999,
+        image: profileImageFile,
+      };
+
+      if (isEditingProfile && editingProfileId) {
+        await updateProfile(editingProfileId, profileData);
+        setProfileSuccess('Profil berhasil diperbarui!');
+      } else {
+        await createProfile(profileData);
+        setProfileSuccess('Profil berhasil ditambahkan!');
+      }
+
+      resetProfileForm();
+      await loadProfiles();
+
+      setTimeout(() => {
+        setShowProfileForm(false);
+        setProfileSuccess('');
+      }, 2000);
+    } catch (err) {
+      setProfileError(err.message || 'Gagal menyimpan profil');
+    }
+  };
+
+  const handleEditProfile = (profileItem) => {
+    setProfileFormData({
+      name: profileItem.name,
+      position: profileItem.position || '',
+      description: profileItem.description || '',
+      sort_order: profileItem.sort_order || '',
+    });
+    setIsEditingProfile(true);
+    setEditingProfileId(profileItem.id);
+    setShowProfileForm(true);
+    setProfileError('');
+    setProfileSuccess('');
+    setProfileImagePreview(profileItem.image_url ? `http://localhost:5000${profileItem.image_url}` : null);
+    setProfileImageFile(null);
+  };
+
+  const handleDeleteProfile = async (profileId) => {
+    if (!window.confirm('Apakah Anda yakin ingin menghapus profil ini?')) {
+      return;
+    }
+
+    try {
+      setDeletingProfile(profileId);
+      await deleteProfile(profileId);
+      setProfileSuccess('Profil berhasil dihapus!');
+      await loadProfiles();
+      setTimeout(() => setProfileSuccess(''), 2000);
+    } catch (err) {
+      setProfileError(err.message || 'Gagal menghapus profil');
+    } finally {
+      setDeletingProfile(null);
     }
   };
 
@@ -1786,6 +1916,101 @@ export default function AdminDashboard() {
             )}
 
             <p className="text-sm text-gray-600 mt-6">Layanan yang ditambahkan akan langsung muncul di halaman <Link to="/services" className="text-[#3d4f45] hover:underline font-medium">Layanan</Link>.</p>
+          </div>
+          )}
+
+          {/* PROFILES MANAGEMENT SECTION - ONLY FOR admin ROLE */}
+          {userRole === 'admin' && (
+          <div>
+            <hr className="my-6" />
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-medium text-[#3d4f45] text-lg">Kelola Profil Pengurus</h2>
+              <button
+                className="bg-[#3d4f45] text-white text-sm px-4 py-2 rounded hover:bg-[#4a5a50] transition"
+                onClick={() => { if (showProfileForm) { resetProfileForm(); setShowProfileForm(false); } else { setShowProfileForm(true); } }}
+              >
+                {showProfileForm ? 'Tutup Form' : 'Tambah Profil'}
+              </button>
+            </div>
+
+            {showProfileForm && (
+              <div className="bg-[#f5f7f6] p-6 rounded-lg mb-6 border border-gray-200">
+                <h3 className="text-lg font-semibold text-[#3d4f45] mb-4">{isEditingProfile ? 'Edit Profil' : 'Form Tambah Profil'}</h3>
+
+                {profileError && (<div className="mb-4 p-3 bg-red-100 text-red-700 rounded">{profileError}</div>)}
+                {profileSuccess && (<div className="mb-4 p-3 bg-green-100 text-green-700 rounded">{profileSuccess}</div>)}
+
+                <form onSubmit={handleProfileSubmit}>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-[#3d4f45] mb-1">Foto Profil</label>
+                    <div className="flex gap-4">
+                      <div className="flex-1">
+                        <input type="file" accept="image/*" onChange={handleProfileImageChange} className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                        <p className="text-xs text-gray-500 mt-1">JPG, PNG, WebP atau GIF (max 5MB)</p>
+                      </div>
+                      {profileImagePreview && (<div className="w-24 h-24"><img src={profileImagePreview} alt="Preview" className="w-full h-full object-cover rounded-lg border"/></div>)}
+                    </div>
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-[#3d4f45] mb-1">Nama Pengurus *</label>
+                    <input type="text" name="name" value={profileFormData.name} onChange={handleProfileInputChange} placeholder="Contoh: Budi Santoso" required className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-[#3d4f45] mb-1">Posisi/Jabatan</label>
+                    <input type="text" name="position" value={profileFormData.position} onChange={handleProfileInputChange} placeholder="Contoh: Ketua BUM Desa" className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-[#3d4f45] mb-1">Deskripsi/Biodata</label>
+                    <textarea name="description" value={profileFormData.description} onChange={handleProfileInputChange} placeholder="Deskripsi singkat profil..." rows="4" className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-[#3d4f45] mb-1">Urutan Tampil</label>
+                    <input type="number" name="sort_order" value={profileFormData.sort_order} onChange={handleProfileInputChange} placeholder="999" className="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button type="submit" className="flex-1 bg-[#3d4f45] text-white font-medium py-2 rounded-lg hover:bg-[#4a5a50]">
+                      {isEditingProfile ? 'Perbarui Profil' : 'Simpan Profil'}
+                    </button>
+                    {isEditingProfile && (
+                      <button type="button" onClick={resetProfileForm} className="px-4 bg-gray-400 text-white font-medium py-2 rounded-lg hover:bg-gray-500">
+                        Batal
+                      </button>
+                    )}
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {loadingProfiles && <div className="text-center py-4 text-gray-600">Sedang memuat profil...</div>}
+            {profileError && !loadingProfiles && <div className="text-center py-4 text-red-600">{profileError}</div>}
+
+            {!loadingProfiles && profiles.length > 0 && (
+              <div className="space-y-3">
+                {profiles.map(p => (
+                  <div key={p.id} className="border border-gray-300 rounded p-4 bg-white hover:bg-gray-50">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h4 className="font-medium text-[#3d4f45] mb-1">{p.name}</h4>
+                        {p.position && <p className="text-sm text-gray-500 mb-2">{p.position}</p>}
+                        <p className="text-sm text-gray-600 line-clamp-2">{p.description}</p>
+                        <p className="text-xs text-gray-500 mt-2">Urutan: {p.sort_order}</p>
+                      </div>
+                      <div className="flex gap-2 ml-4">
+                        <button onClick={() => handleEditProfile(p)} className="bg-blue-500 text-white px-3 py-1 rounded text-xs">Edit</button>
+                        <button onClick={() => handleDeleteProfile(p.id)} disabled={deletingProfile===p.id} className="bg-red-500 text-white px-3 py-1 rounded text-xs">{deletingProfile===p.id ? 'Menghapus...' : 'Hapus'}</button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <p className="text-sm text-gray-600 mt-6">Profil yang ditambahkan akan langsung muncul di halaman <Link to="/about-us" className="text-[#3d4f45] hover:underline font-medium">Tentang Kami</Link>.</p>
           </div>
           )}
 

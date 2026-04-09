@@ -1,8 +1,35 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
+import { fetchProfilesList } from "../src/api/profilesApi";
 
 export default function AboutUs({ isAdmin, AdminSection }) {
+  const [profiles, setProfiles] = useState([]);
+  const [loadingProfiles, setLoadingProfiles] = useState(true);
+  const [errorProfiles, setErrorProfiles] = useState('');
+
+  useEffect(() => {
+    async function loadProfiles() {
+      try {
+        console.log('[AboutUs] Loading profiles...');
+        setLoadingProfiles(true);
+        setErrorProfiles('');
+        const res = await fetchProfilesList();
+        console.log('[AboutUs] Response:', res);
+        const profilesData = res.data || [];
+        console.log('[AboutUs] Profiles data:', profilesData);
+        setProfiles(profilesData);
+        console.log('[AboutUs] Set profiles to:', profilesData.length, 'items');
+      } catch (err) {
+        console.error('[AboutUs] Error loading profiles:', err);
+        setErrorProfiles(err.message || 'Gagal memuat profil');
+        setProfiles([]);
+      } finally {
+        setLoadingProfiles(false);
+      }
+    }
+    loadProfiles();
+  }, []);
   return (
     <div className="min-h-screen bg-white font-serif">
       <Navbar />
@@ -80,35 +107,39 @@ export default function AboutUs({ isAdmin, AdminSection }) {
         </div>
       </section>
 
-      {/* Services Section */}
+      {/* Values Section */}
       <section className="py-20 px-6 bg-white">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl text-center mb-4 text-[#3d4f45] font-light">
-            Layanan Kami
+          <h2 className="text-3xl text-center mb-12 text-[#3d4f45] font-light">
+            Pengurus BUM Desa
           </h2>
-          <p className="text-center text-gray-600 mb-12 text-sm max-w-3xl mx-auto">
-            Lorem Ipsum Dolor Sit Amet, Consectetur Adipiscing Elit, Sed Do
-            Eiusmod Tempor Incididunt Ut Labore Et Dolore Magna Aliqua.
-          </p>
-
-          <div className="grid md:grid-cols-2 gap-8">
-            {[1, 2, 3, 4, 5, 6].map((item) => (
-              <div key={item} className="flex gap-6">
-                <div className="w-24 h-24 bg-[#b8c5ba] rounded-full flex-shrink-0"></div>
-                <div>
-                  <h3 className="text-xl mb-3 text-[#3d4f45]">
-                    Layanan {item}
-                  </h3>
+          
+          {loadingProfiles && <div className="text-center py-8 text-gray-600">Sedang memuat profil...</div>}
+          {errorProfiles && !loadingProfiles && <div className="text-center py-8 text-red-600">{errorProfiles}</div>}
+          {!loadingProfiles && profiles.length === 0 && <div className="text-center py-8 text-gray-600">Belum ada profil yang ditambahkan</div>}
+          
+          {!loadingProfiles && profiles.length > 0 && (
+            <div className="grid md:grid-cols-2 gap-12">
+              {profiles.map((profile) => (
+                <div key={profile.id} className="text-center">
+                  {profile.image_url ? (
+                    <img 
+                      src={`http://localhost:5000${profile.image_url}`}
+                      alt={profile.name}
+                      className="w-32 h-32 object-cover rounded-full mx-auto mb-4 shadow-lg"
+                    />
+                  ) : (
+                    <div className="w-32 h-32 bg-[#b8c5ba] rounded-full mx-auto mb-4 shadow-lg"></div>
+                  )}
+                  <h3 className="text-xl font-medium text-[#3d4f45] mb-1">{profile.name}</h3>
+                  {profile.position && <p className="text-sm text-gray-500 mb-3 font-medium">{profile.position}</p>}
                   <p className="text-gray-600 text-sm leading-relaxed">
-                    Lorem Ipsum Dolor Sit Amet, Consectetur Adipiscing Elit, Sed
-                    Do Eiusmod Tempor Incididunt Ut Labore Et Dolore Magna
-                    Aliqua. Ut Enim Ad Minim Veniam, Quis Nostrud Exercitation
-                    Ullamco Laboris Nisi Ut Aliquip Ex Ea Commodo Consequat.
+                    {profile.description}
                   </p>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 

@@ -70,6 +70,11 @@ const servicesRoutes = require('./routes/services.routes');
 app.use('/api/services', servicesRoutes);
 /* ======================================== */
 
+/* ======== [ADD] PROFILES ROUTES ======== */
+const profilesRoutes = require('./routes/profiles.routes');
+app.use('/api/profiles', profilesRoutes);
+/* ======================================== */
+
 // =======================
 // PRODUCTS (MySQL)
 // =======================
