@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
+import BillboardCarousel from "./BillboardCarousel";
 import { fetchProductsList } from "../src/api/productsApi";
 import { fetchCategoriesList } from "../src/api/categoriesApi";
 
@@ -57,20 +58,26 @@ export default function Products({ isAdmin, AdminSection }) {
     <div className="min-h-screen bg-white font-serif">
       <Navbar />
 
-      {/* Hero Section */}
-      <section className="relative h-96 bg-[#b8c5ba] flex items-center justify-center mt-16">
-        <div className="absolute top-1/4 w-32 h-32 bg-[#a8b5aa] rounded-full opacity-60"></div>
-        <div className="text-center z-10 px-4">
-          <h1 className="text-4xl md:text-5xl text-[#3d4f45] mb-4 font-light">
-            Produk Kami
-          </h1>
-          <p className="text-[#4a5a50] max-w-2xl mx-auto text-sm leading-relaxed">
-            Berbagai produk berkualitas hasil karya masyarakat desa dengan
-            standar profesional untuk kemajuan bersama. Setiap produk adalah
-            wujud dedikasi untuk mengembangkan potensi lokal.
-          </p>
+      {/* Hero Section with Billboard Carousel */}
+      <section className="relative h-96 flex items-center justify-center mt-16">
+        {/* Billboard Carousel as background */}
+        <div className="absolute inset-0">
+          <BillboardCarousel />
         </div>
-        <div className="absolute bottom-0 w-full h-1/2 bg-gradient-to-t from-[#a8b5aa] to-transparent"></div>
+        
+        {/* Overlay text */}
+        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 z-10">
+          <div className="text-center px-4">
+            <h1 className="text-4xl md:text-5xl text-white mb-4 font-light">
+              Produk Kami
+            </h1>
+            <p className="text-gray-100 max-w-2xl mx-auto text-sm leading-relaxed">
+              Berbagai produk berkualitas hasil karya masyarakat desa dengan
+              standar profesional untuk kemajuan bersama. Setiap produk adalah
+              wujud dedikasi untuk mengembangkan potensi lokal.
+            </p>
+          </div>
+        </div>
       </section>
 
       {/* Products Section */}

@@ -75,6 +75,11 @@ const profilesRoutes = require('./routes/profiles.routes');
 app.use('/api/profiles', profilesRoutes);
 /* ======================================== */
 
+/* ======== [ADD] BILLBOARDS ROUTES ======== */
+const billboardsRoutes = require('./routes/billboards.routes');
+app.use('/api/billboards', billboardsRoutes);
+/* ======================================== */
+
 // =======================
 // PRODUCTS (MySQL)
 // =======================

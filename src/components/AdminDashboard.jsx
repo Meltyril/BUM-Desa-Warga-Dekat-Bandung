@@ -8,6 +8,7 @@ import { fetchUsersList, createUser, updateUser, deleteUser, resetUserPassword }
 import { fetchCategoriesList, createCategory, updateCategory, deleteCategory } from '../src/api/categoriesApi';
 import { fetchServicesList, createService, updateService, deleteService } from '../src/api/servicesApi';
 import { fetchProfilesList, createProfile, updateProfile, deleteProfile } from '../src/api/profilesApi';
+import { fetchBillboardsAdminList, createBillboard, updateBillboard, deleteBillboard } from '../src/api/billboardsApi';
 import { getToken, removeToken, getAdminRole, setAdminInfo, logout } from '../utils/auth';
 import Navbar from './Navbar';
 
@@ -120,6 +121,19 @@ export default function AdminDashboard() {
   const [profileImageFile, setProfileImageFile] = useState(null);
   const [profileImagePreview, setProfileImagePreview] = useState(null);
 
+  // Billboards states (admin only)
+  const [billboards, setBillboards] = useState([]);
+  const [loadingBillboards, setLoadingBillboards] = useState(false);
+  const [billboardError, setBillboardError] = useState('');
+  const [billboardSuccess, setBillboardSuccess] = useState('');
+  const [showBillboardForm, setShowBillboardForm] = useState(false);
+  const [isEditingBillboard, setIsEditingBillboard] = useState(false);
+  const [editingBillboardId, setEditingBillboardId] = useState(null);
+  const [deletingBillboard, setDeletingBillboard] = useState(null);
+  const [billboardFormData, setBillboardFormData] = useState({ title: '', link: '', sort_order: '', is_active: true });
+  const [billboardImageFile, setBillboardImageFile] = useState(null);
+  const [billboardImagePreview, setBillboardImagePreview] = useState(null);
+
   const navigate = useNavigate();
 
   // Load admin profile
@@ -152,6 +166,7 @@ export default function AdminDashboard() {
     loadCategories();
     loadServices();
     loadProfiles();
+    loadBillboards();
     if (userRole === 'admin') {
       loadUsers();
     }
@@ -241,6 +256,19 @@ export default function AdminDashboard() {
       setProfileError('Gagal memuat profil');
     } finally {
       setLoadingProfiles(false);
+    }
+  };
+
+  const loadBillboards = async () => {
+    try {
+      setLoadingBillboards(true);
+      const billboardsList = await fetchBillboardsAdminList();
+      setBillboards(billboardsList.data || []);
+    } catch (err) {
+      console.error('Error loading billboards:', err);
+      setBillboardError('Gagal memuat billboard');
+    } finally {
+      setLoadingBillboards(false);
     }
   };
 
@@ -2011,6 +2039,275 @@ export default function AdminDashboard() {
             )}
 
             <p className="text-sm text-gray-600 mt-6">Profil yang ditambahkan akan langsung muncul di halaman <Link to="/about-us" className="text-[#3d4f45] hover:underline font-medium">Tentang Kami</Link>.</p>
+          </div>
+          )}
+
+          <hr className="my-6" />
+
+          {/* BILLBOARDS MANAGEMENT SECTION - ONLY FOR ADMIN ROLES */}
+          {userRole === 'admin' && (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-medium text-[#3d4f45] text-lg">Manajemen Billboard</h2>
+              <button
+                className="bg-[#3d4f45] text-white text-sm px-4 py-2 rounded hover:bg-[#4a5a50] transition"
+                onClick={() => {
+                  if (showBillboardForm) {
+                    setBillboardFormData({ title: '', link: '', sort_order: '', is_active: true });
+                    setBillboardImageFile(null);
+                    setBillboardImagePreview(null);
+                    setIsEditingBillboard(false);
+                    setEditingBillboardId(null);
+                    setShowBillboardForm(false);
+                  } else {
+                    setShowBillboardForm(true);
+                  }
+                }}
+              >
+                {showBillboardForm ? 'Tutup Form' : 'Tambah Billboard'}
+              </button>
+            </div>
+
+            {/* Billboard Form */}
+            {showBillboardForm && (
+              <div className="bg-[#f5f7f6] p-6 rounded-lg mb-6 border border-gray-200">
+                <h3 className="text-lg font-semibold text-[#3d4f45] mb-4">
+                  {isEditingBillboard ? 'Edit Billboard' : 'Form Tambah Billboard'}
+                </h3>
+
+                {billboardError && (
+                  <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
+                    {billboardError}
+                  </div>
+                )}
+
+                {billboardSuccess && (
+                  <div className="mb-4 p-3 bg-green-100 text-green-700 rounded">
+                    {billboardSuccess}
+                  </div>
+                )}
+
+                <form onSubmit={async (e) => {
+                  e.preventDefault();
+                  setBillboardError('');
+                  setBillboardSuccess('');
+                  try {
+                    if (!billboardFormData.title.trim()) {
+                      setBillboardError('Judul billboard wajib diisi');
+                      return;
+                    }
+                    if (!billboardImageFile && !isEditingBillboard) {
+                      setBillboardError('Gambar wajib diupload');
+                      return;
+                    }
+                    
+                    if (isEditingBillboard && editingBillboardId) {
+                      await updateBillboard(editingBillboardId, {
+                        title: billboardFormData.title,
+                        link: billboardFormData.link,
+                        sort_order: billboardFormData.sort_order,
+                        is_active: billboardFormData.is_active,
+                        image: billboardImageFile
+                      });
+                      setBillboardSuccess('Billboard berhasil diperbarui!');
+                    } else {
+                      await createBillboard({
+                        title: billboardFormData.title,
+                        link: billboardFormData.link,
+                        sort_order: billboardFormData.sort_order,
+                        is_active: billboardFormData.is_active,
+                        image: billboardImageFile
+                      });
+                      setBillboardSuccess('Billboard berhasil ditambahkan!');
+                    }
+                    
+                    setBillboardFormData({ title: '', link: '', sort_order: '', is_active: true });
+                    setBillboardImageFile(null);
+                    setBillboardImagePreview(null);
+                    setIsEditingBillboard(false);
+                    setEditingBillboardId(null);
+                    await loadBillboards();
+                    setTimeout(() => {
+                      setShowBillboardForm(false);
+                      setBillboardSuccess('');
+                    }, 2000);
+                  } catch (err) {
+                    setBillboardError(err.message || 'Terjadi kesalahan');
+                  }
+                }}>
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-[#3d4f45] mb-1">
+                      Gambar Billboard
+                    </label>
+                    <div className="flex gap-4">
+                      <div className="flex-1">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              setBillboardImageFile(file);
+                              const reader = new FileReader();
+                              reader.onloadend = () => setBillboardImagePreview(reader.result);
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3d4f45]"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">JPG, PNG, WebP atau GIF (max 5MB)</p>
+                      </div>
+                      {billboardImagePreview && (
+                        <div className="w-32 h-32">
+                          <img 
+                            src={billboardImagePreview} 
+                            alt="Preview" 
+                            className="w-full h-full object-cover rounded-lg border border-gray-300"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-[#3d4f45] mb-1">
+                      Judul Billboard *
+                    </label>
+                    <input
+                      type="text"
+                      value={billboardFormData.title}
+                      onChange={(e) => setBillboardFormData({...billboardFormData, title: e.target.value})}
+                      placeholder="Contoh: Promo Kopi Kami"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3d4f45]"
+                      required
+                    />
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-[#3d4f45] mb-1">
+                      Link (Optional)
+                    </label>
+                    <input
+                      type="url"
+                      value={billboardFormData.link}
+                      onChange={(e) => setBillboardFormData({...billboardFormData, link: e.target.value})}
+                      placeholder="https://example.com"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3d4f45]"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label className="block text-sm font-medium text-[#3d4f45] mb-1">
+                        Urutan Tampil
+                      </label>
+                      <input
+                        type="number"
+                        value={billboardFormData.sort_order}
+                        onChange={(e) => setBillboardFormData({...billboardFormData, sort_order: e.target.value})}
+                        placeholder="1"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3d4f45]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-[#3d4f45] mb-1">
+                        Status
+                      </label>
+                      <select
+                        value={billboardFormData.is_active ? 'aktif' : 'tidak_aktif'}
+                        onChange={(e) => setBillboardFormData({...billboardFormData, is_active: e.target.value === 'aktif'})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3d4f45]"
+                      >
+                        <option value="aktif">Aktif</option>
+                        <option value="tidak_aktif">Tidak Aktif</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button
+                      type="submit"
+                      className="bg-[#3d4f45] text-white px-6 py-2 rounded hover:bg-[#4a5a50] transition text-sm"
+                    >
+                      {isEditingBillboard ? 'Perbarui Billboard' : 'Simpan Billboard'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setBillboardFormData({ title: '', link: '', sort_order: '', is_active: true });
+                        setBillboardImageFile(null);
+                        setBillboardImagePreview(null);
+                        setIsEditingBillboard(false);
+                        setEditingBillboardId(null);
+                        setShowBillboardForm(false);
+                      }}
+                      className="bg-gray-400 text-white px-6 py-2 rounded hover:bg-gray-500 transition text-sm"
+                    >
+                      Batal
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {loadingBillboards && <p className="text-sm text-gray-600">Memuat billboard...</p>}
+
+            {!loadingBillboards && billboards.length === 0 && (
+              <p className="text-sm text-gray-600">Belum ada billboard yang ditambahkan.</p>
+            )}
+
+            {!loadingBillboards && billboards.length > 0 && (
+              <div className="space-y-3">
+                {billboards.map(b => (
+                  <div key={b.id} className="border border-gray-300 rounded p-4 bg-white hover:bg-gray-50">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h4 className="font-medium text-[#3d4f45]">{b.title}</h4>
+                          <span className={`text-xs px-2 py-1 rounded ${b.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'}`}>
+                            {b.is_active ? 'Aktif' : 'Tidak Aktif'}
+                          </span>
+                        </div>
+                        {b.link && <p className="text-sm text-blue-600 mb-2">Link: {b.link}</p>}
+                        <p className="text-xs text-gray-500">Urutan: {b.sort_order}</p>
+                        {b.image_url && <img src={`http://localhost:5000${b.image_url}`} alt={b.title} className="w-20 h-20 object-cover rounded mt-2" />}
+                      </div>
+                      <div className="flex gap-2 ml-4">
+                        <button onClick={() => {
+                          setBillboardFormData({
+                            title: b.title,
+                            link: b.link || '',
+                            sort_order: b.sort_order,
+                            is_active: b.is_active
+                          });
+                          setBillboardImagePreview(b.image_url ? `http://localhost:5000${b.image_url}` : null);
+                          setBillboardImageFile(null);
+                          setEditingBillboardId(b.id);
+                          setIsEditingBillboard(true);
+                          setShowBillboardForm(true);
+                        }} className="bg-blue-500 text-white px-3 py-1 rounded text-xs">Edit</button>
+                        <button onClick={async () => {
+                          if (!window.confirm('Yakin ingin menghapus billboard ini?')) return;
+                          try {
+                            setDeletingBillboard(b.id);
+                            await deleteBillboard(b.id);
+                            setBillboardSuccess('Billboard berhasil dihapus!');
+                            await loadBillboards();
+                            setTimeout(() => setBillboardSuccess(''), 2000);
+                          } catch (err) {
+                            setBillboardError(err.message);
+                          } finally {
+                            setDeletingBillboard(null);
+                          }
+                        }} disabled={deletingBillboard===b.id} className="bg-red-500 text-white px-3 py-1 rounded text-xs">{deletingBillboard===b.id ? 'Menghapus...' : 'Hapus'}</button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <p className="text-sm text-gray-600 mt-6">Billboard akan ditampilkan di semua halaman sebagai carousel/slider.</p>
           </div>
           )}
 

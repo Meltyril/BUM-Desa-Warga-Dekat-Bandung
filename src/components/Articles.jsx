@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from './Navbar';
 import Footer from './Footer';
+import BillboardCarousel from './BillboardCarousel';
 import { fetchArticlesList } from '../src/api/articlesApi';
 
 export default function Articles() {
@@ -25,6 +26,27 @@ export default function Articles() {
   return (
     <div className="min-h-screen bg-white font-serif">
       <Navbar />
+      
+      {/* Hero Section with Billboard Carousel */}
+      <section className="relative h-96 flex items-center justify-center mt-16">
+        {/* Billboard Carousel as background */}
+        <div className="absolute inset-0">
+          <BillboardCarousel />
+        </div>
+        
+        {/* Overlay text */}
+        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 z-10">
+          <div className="text-center px-4">
+            <h1 className="text-4xl md:text-5xl text-white mb-4 font-light">
+              Artikel
+            </h1>
+            <p className="text-gray-100 max-w-2xl mx-auto text-sm leading-relaxed">
+              Kumpulan artikel dan informasi terkini dari BUM Desa Warga Dekat Bandung
+            </p>
+          </div>
+        </div>
+      </section>
+
       <main className="max-w-4xl mx-auto p-6">
         <h1 className="text-2xl font-semibold text-[#3d4f45] mb-4">Artikel</h1>
         {loading && <p>Memuat artikel...</p>}
